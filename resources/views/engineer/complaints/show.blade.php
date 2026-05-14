@@ -168,11 +168,12 @@
 
 <script>
 const STATUS_CFG = {
-    pending:      {label:'Pending',      color:'#92400e', bg:'#fffbeb', icon:'⏳'},
-    under_review: {label:'Under Review', color:'#1e40af', bg:'#eff6ff', icon:'🔍'},
-    in_progress:  {label:'In Progress',  color:'#0c4a6e', bg:'#e0f2fe', icon:'🔧'},
-    resolved:     {label:'Resolved',     color:'#14532d', bg:'#f0fdf4', icon:'✅'},
-    rejected:     {label:'Rejected',     color:'#7f1d1d', bg:'#fef2f2', icon:'❌'},
+    pending:               {label:'Pending',               color:'#92400e', bg:'#fffbeb', icon:'⏳'},
+    under_review:          {label:'Under Review',          color:'#1e40af', bg:'#eff6ff', icon:'🔍'},
+    in_progress:           {label:'In Progress',           color:'#0c4a6e', bg:'#e0f2fe', icon:'🔧'},
+    awaiting_verification: {label:'Awaiting Verification', color:'#c2410c', bg:'#fff7ed', icon:'🕐'},
+    verified:              {label:'Verified ✓',            color:'#14532d', bg:'#f0fdf4', icon:'✅'},
+    rejected:              {label:'Rejected',              color:'#7f1d1d', bg:'#fef2f2', icon:'❌'},
 };
 const SEV_CFG = {
     low:       {bg:'#d1fae5',color:'#065f46'},
@@ -180,12 +181,14 @@ const SEV_CFG = {
     high:      {bg:'#ffedd5',color:'#7c2d12'},
     emergency: {bg:'#fee2e2',color:'#7f1d1d'},
 };
+// Engineer-visible transitions only — backend is the source of truth via next_statuses
 const TRANSITIONS = {
-    pending:      ['under_review','rejected'],
-    under_review: ['in_progress','rejected'],
-    in_progress:  ['resolved','rejected'],
-    resolved:     [],
-    rejected:     [],
+    pending:               [],
+    under_review:          [],
+    in_progress:           ['awaiting_verification'],
+    awaiting_verification: [],  // engineer waits for admin to verify
+    verified:              [],
+    rejected:              [],
 };
 
 const complaintId = {{ request()->route('complaint') }};
@@ -258,22 +261,65 @@ async function loadDetail() {
         } else {
             timelineEl.innerHTML = timeline.map((h, i) => {
                 const ns = STATUS_CFG[h.new_status] ?? {label:h.new_status, color:'#374151', bg:'#f3f4f6', icon:'📌'};
+                const isWorkRejection = h.old_status === 'awaiting_verification' && h.new_status === 'in_progress';
+                const isVerified      = h.new_status === 'verified';
+                const actor = h.changed_by ? `${esc(h.changed_by.name)} (ID: ${h.changed_by.id})` : 'Admin';
                 const isLast = i === timeline.length - 1;
+
+                let dotBg = ns.bg, dotColor = ns.color, badgeBg = ns.bg, badgeColor = ns.color, dotIcon = ns.icon;
+                let labelHtml, remarksHtml = '';
+
+                if (isWorkRejection) {
+                    dotBg = '#fef2f2'; dotColor = '#991b1b'; dotIcon = '🚫';
+                    badgeBg = '#fef2f2'; badgeColor = '#991b1b';
+                    labelHtml = '🚫 Work Rejected by Admin';
+                    remarksHtml = `
+                        <div style="background:#fef2f2;border-left:3px solid #fca5a5;border-radius:0 .375rem .375rem 0;
+                                    padding:.5rem .75rem;margin:.375rem 0;font-size:.8125rem;">
+                            <div><span style="font-weight:700;color:#991b1b;">Rejected by:</span>
+                                 <span style="color:#374151;"> ${actor}</span></div>
+                            ${h.remarks ? `<div style="margin-top:.25rem;"><span style="font-weight:700;color:#991b1b;">Reason:</span>
+                                 <span style="color:#374151;font-style:italic;"> "${esc(h.remarks)}"</span></div>` : ''}
+                        </div>`;
+                } else if (isVerified) {
+                    dotBg = '#f0fdf4'; dotColor = '#14532d'; dotIcon = '✅';
+                    badgeBg = '#f0fdf4'; badgeColor = '#14532d';
+                    labelHtml = '✅ Task Completed — Verified by Admin';
+                    remarksHtml = `
+                        <div style="background:#f0fdf4;border-left:3px solid #86efac;border-radius:0 .375rem .375rem 0;
+                                    padding:.5rem .75rem;margin:.375rem 0;font-size:.8125rem;">
+                            <div><span style="font-weight:700;color:#14532d;">Verified by:</span>
+                                 <span style="color:#374151;"> ${actor}</span></div>
+                            ${h.remarks ? `<div style="margin-top:.25rem;color:#6b7280;font-style:italic;">"${esc(h.remarks)}"</div>` : ''}
+                        </div>`;
+                } else if (!h.old_status) {
+                    labelHtml = '📋 Complaint Filed';
+                    if (h.remarks) remarksHtml = `<p style="font-size:.8125rem;color:#6b7280;margin:.25rem 0;">"${esc(h.remarks)}"</p>`;
+                } else {
+                    const from = h.old_status.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const to   = h.new_status.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+                    labelHtml = `${from} → ${to}`;
+                    if (h.remarks) remarksHtml = `<p style="font-size:.8125rem;color:#6b7280;margin:.25rem 0;font-style:italic;">"${esc(h.remarks)}"</p>`;
+                }
+
                 return `<div class="timeline-step" style="padding-bottom:${isLast?'0':'1.25rem'};">
-                    <div class="timeline-dot" style="background:${ns.bg};color:${ns.color};">${ns.icon}</div>
+                    <div class="timeline-dot" style="background:${dotBg};color:${dotColor};">${dotIcon}</div>
                     <div style="flex:1;min-width:0;">
-                        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.25rem;">
-                            <span style="font-size:.8125rem;font-weight:700;color:#111827;">${badge(h.new_status)}</span>
+                        <div style="margin-bottom:.25rem;">
+                            <span style="background:${badgeBg};color:${badgeColor};font-size:.8rem;font-weight:700;
+                                         padding:.2rem .625rem;border-radius:9999px;">${labelHtml}</span>
                         </div>
-                        ${h.remarks ? `<p style="font-size:.8125rem;color:#6b7280;margin:.25rem 0;">"${esc(h.remarks)}"</p>` : ''}
-                        <p style="font-size:.75rem;color:#9ca3af;">${fmt(h.created_at)} ${h.changed_by ? '· by '+esc(h.changed_by.name) : ''}</p>
+                        ${remarksHtml}
+                        <p style="font-size:.75rem;color:#9ca3af;margin:.25rem 0 0;">
+                            ${fmt(h.created_at)}${!isWorkRejection && !isVerified && h.changed_by ? ' · by '+esc(h.changed_by.name) : ''}
+                        </p>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        // ── Update form ──
-        renderUpdateForm(c.status);
+        // ── Update form (uses backend next_statuses — engineer only sees allowed transitions) ──
+        renderUpdateForm(c.status, c.next_statuses ?? []);
 
         // Show content
         document.getElementById('detail-loading').style.display = 'none';
@@ -289,19 +335,34 @@ async function loadDetail() {
     }
 }
 
-function renderUpdateForm(currentStatus) {
-    const nextStatuses = TRANSITIONS[currentStatus] ?? [];
-    const updateCard   = document.getElementById('update-card');
+function renderUpdateForm(currentStatus, nextStatuses) {
+    nextStatuses = nextStatuses ?? [];
+    const updateCard = document.getElementById('update-card');
 
     if (!nextStatuses.length) {
+        const isVerified              = currentStatus === 'verified';
+        const isRejected              = currentStatus === 'rejected';
+        const isAwaitingVerification  = currentStatus === 'awaiting_verification';
+
+        let icon = '✅', color = '#15803d', bg = '#f0fdf4', msg = '', sub = '';
+        if (isVerified) {
+            icon = '🏆'; msg = 'Work Verified by Admin!';
+            sub = 'This complaint has been officially closed. Great job!';
+        } else if (isRejected) {
+            icon = '❌'; color = '#991b1b'; bg = '#fef2f2';
+            msg = 'Complaint Rejected.'; sub = 'This complaint was rejected by admin.';
+        } else if (isAwaitingVerification) {
+            icon = '🕐'; color = '#c2410c'; bg = '#fff7ed';
+            msg = 'Awaiting Admin Verification';
+            sub = 'Your work has been submitted. The admin will review and verify shortly.';
+        }
+
         updateCard.innerHTML = `
             <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:.875rem;">🔄 Update Status</h2>
-            <div style="text-align:center;padding:1.5rem 1rem;background:#f0fdf4;border-radius:.875rem;">
-                <div style="font-size:2rem;margin-bottom:.5rem;">✅</div>
-                <p style="font-size:.875rem;font-weight:700;color:#15803d;margin:0;">
-                    ${currentStatus === 'resolved' ? 'Complaint resolved!' : 'Complaint closed.'}
-                </p>
-                <p style="font-size:.78rem;color:#9ca3af;margin:.25rem 0 0;">No further status changes allowed.</p>
+            <div style="text-align:center;padding:1.5rem 1rem;background:${bg};border-radius:.875rem;">
+                <div style="font-size:2rem;margin-bottom:.5rem;">${icon}</div>
+                <p style="font-size:.875rem;font-weight:700;color:${color};margin:0;">${msg}</p>
+                <p style="font-size:.78rem;color:#9ca3af;margin:.375rem 0 0;">${sub}</p>
             </div>`;
         return;
     }

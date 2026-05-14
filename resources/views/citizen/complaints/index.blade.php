@@ -86,11 +86,12 @@
 
 <script>
 const STATUS_CONFIG = {
-    pending:      {label:'⏳ Pending',      color:'#92400e',bg:'#fffbeb',border:'#fcd34d'},
-    under_review: {label:'🔍 Under Review', color:'#1e40af',bg:'#eff6ff',border:'#93c5fd'},
-    in_progress:  {label:'🔧 In Progress',  color:'#1d4ed8',bg:'#dbeafe',border:'#60a5fa'},
-    resolved:     {label:'✅ Resolved',     color:'#14532d',bg:'#f0fdf4',border:'#86efac'},
-    rejected:     {label:'❌ Rejected',     color:'#7f1d1d',bg:'#fef2f2',border:'#fca5a5'},
+    pending:               {label:'⏳ Pending',               color:'#92400e',bg:'#fffbeb',border:'#fcd34d'},
+    under_review:          {label:'🔍 Under Review',          color:'#1e40af',bg:'#eff6ff',border:'#93c5fd'},
+    in_progress:           {label:'🔧 In Progress',           color:'#1d4ed8',bg:'#dbeafe',border:'#60a5fa'},
+    awaiting_verification: {label:'🕐 Awaiting Verification', color:'#c2410c',bg:'#fff7ed',border:'#fb923c'},
+    verified:              {label:'✅ Verified',              color:'#14532d',bg:'#f0fdf4',border:'#86efac'},
+    rejected:              {label:'❌ Rejected',              color:'#7f1d1d',bg:'#fef2f2',border:'#fca5a5'},
 };
 const SEV_CONFIG = {
     low:      {label:'🟢 Low',      color:'#065f46',bg:'#d1fae5'},
@@ -99,10 +100,11 @@ const SEV_CONFIG = {
     emergency:{label:'🔴 Emergency',color:'#7f1d1d',bg:'#fee2e2'},
 };
 const PIPELINE = [
-    {key:'pending',label:'Submitted',icon:'📋'},
-    {key:'under_review',label:'Under Review',icon:'🔍'},
-    {key:'in_progress',label:'In Progress',icon:'🔧'},
-    {key:'resolved',label:'Resolved',icon:'✅'},
+    {key:'pending',               label:'Submitted',            icon:'📋'},
+    {key:'under_review',          label:'Under Review',         icon:'🔍'},
+    {key:'in_progress',           label:'In Progress',          icon:'🔧'},
+    {key:'awaiting_verification', label:'Awaiting Verification',icon:'🕐'},
+    {key:'verified',              label:'Verified ✓',           icon:'✅'},
 ];
 
 let currentPage = 1;
@@ -127,7 +129,7 @@ function updateStats(total, list){
     document.getElementById('stat-total').textContent    = total;
     document.getElementById('stat-pending').textContent  = list.filter(c=>c.status==='pending').length;
     document.getElementById('stat-in-progress').textContent = list.filter(c=>['under_review','in_progress'].includes(c.status)).length;
-    document.getElementById('stat-resolved').textContent = list.filter(c=>c.status==='resolved').length;
+    document.getElementById('stat-resolved').textContent = list.filter(c=>c.status==='verified').length;
 }
 
 function renderCard(c){
@@ -326,23 +328,61 @@ function renderModal(c){
                 return `<div style="position:relative;">
                     <div style="position:absolute;left:11px;top:12px;bottom:12px;width:2px;background:linear-gradient(to bottom,#e5e7eb 0%,transparent 100%);"></div>
                     ${histories.map((h,i)=>{
-                        const ns = STATUS_CONFIG[h.new_status] || {label:h.new_status,color:'#374151',bg:'#f3f4f6',border:'#d1d5db'};
-                        const label = h.old_status
-                            ? h.old_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) + ' → ' + h.new_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
-                            : '📋 Complaint Filed';
+                        const ns  = STATUS_CONFIG[h.new_status] || {label:h.new_status,color:'#374151',bg:'#f3f4f6',border:'#d1d5db'};
+                        const isWorkRejection = h.old_status === 'awaiting_verification' && h.new_status === 'in_progress';
+                        const isVerified      = h.new_status === 'verified';
+                        const actor = h.changed_by ? `${esc(h.changed_by.name)} (ID: ${h.changed_by.id})` : 'Admin';
+
+                        let dotBg = ns.bg, dotColor = ns.color, badgeBg = ns.bg, badgeColor = ns.color;
+                        let labelHtml, remarksHtml = '';
+
+                        if (isWorkRejection) {
+                            dotBg = '#fef2f2'; dotColor = '#991b1b';
+                            badgeBg = '#fef2f2'; badgeColor = '#991b1b';
+                            labelHtml = `🚫 Work Rejected by Admin`;
+                            if (h.remarks) remarksHtml = `
+                                <div style="background:#fef2f2;border-left:3px solid #fca5a5;border-radius:0 .375rem .375rem 0;
+                                            padding:.5rem .75rem;margin:.375rem 0;font-size:.75rem;">
+                                    <span style="font-weight:700;color:#991b1b;">Rejected by:</span>
+                                    <span style="color:#374151;"> ${actor}</span><br>
+                                    <span style="font-weight:700;color:#991b1b;">Reason:</span>
+                                    <span style="color:#374151;font-style:italic;"> "${esc(h.remarks)}"</span>
+                                </div>`;
+                            else remarksHtml = `<p style="font-size:.75rem;color:#991b1b;margin:.2rem 0;">Rejected by: ${actor}</p>`;
+                        } else if (isVerified) {
+                            dotBg = '#f0fdf4'; dotColor = '#14532d';
+                            badgeBg = '#f0fdf4'; badgeColor = '#14532d';
+                            labelHtml = `✅ Task Completed — Verified by Admin`;
+                            remarksHtml = `
+                                <div style="background:#f0fdf4;border-left:3px solid #86efac;border-radius:0 .375rem .375rem 0;
+                                            padding:.5rem .75rem;margin:.375rem 0;font-size:.75rem;">
+                                    <span style="font-weight:700;color:#14532d;">Verified by:</span>
+                                    <span style="color:#374151;"> ${actor}</span>
+                                    ${h.remarks ? `<br><span style="color:#6b7280;font-style:italic;">"${esc(h.remarks)}"</span>` : ''}
+                                </div>`;
+                        } else if (!h.old_status) {
+                            labelHtml = `📋 Complaint Filed`;
+                            if (h.remarks) remarksHtml = `<p style="font-size:.75rem;color:#6b7280;margin:.2rem 0;font-style:italic;">"${esc(h.remarks)}"</p>`;
+                        } else {
+                            const from = h.old_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+                            const to   = h.new_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+                            labelHtml = `${from} → ${to}`;
+                            if (h.remarks) remarksHtml = `<p style="font-size:.75rem;color:#6b7280;margin:.2rem 0;font-style:italic;">"${esc(h.remarks)}"</p>`;
+                        }
+
                         const dateStr = new Date(h.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
                         return `<div style="display:flex;gap:.875rem;align-items:flex-start;padding-bottom:${i<histories.length-1?'1rem':'0'};position:relative;">
-                            <div style="width:24px;height:24px;border-radius:50%;background:${ns.bg};color:${ns.color};
+                            <div style="width:24px;height:24px;border-radius:50%;background:${dotBg};color:${dotColor};
                                         display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;
-                                        flex-shrink:0;border:2px solid ${ns.color}33;z-index:1;">
+                                        flex-shrink:0;border:2px solid ${dotColor}33;z-index:1;">
                                 ${(ns.label??'')[0]??'•'}
                             </div>
                             <div style="flex:1;min-width:0;padding-top:.125rem;">
-                                <span style="background:${ns.bg};color:${ns.color};font-size:.7rem;font-weight:700;
-                                             padding:.2rem .625rem;border-radius:9999px;display:inline-block;margin-bottom:.25rem;">${label}</span>
-                                ${h.remarks?`<p style="font-size:.75rem;color:#6b7280;margin:.2rem 0;font-style:italic;">"${esc(h.remarks)}"</p>`:''}
+                                <span style="background:${badgeBg};color:${badgeColor};font-size:.7rem;font-weight:700;
+                                             padding:.2rem .625rem;border-radius:9999px;display:inline-block;margin-bottom:.25rem;">${labelHtml}</span>
+                                ${remarksHtml}
                                 <p style="font-size:.7rem;color:#9ca3af;margin:0;">
-                                    🕐 ${dateStr}${h.changed_by?' · <strong style="color:#6b7280;">'+esc(h.changed_by.name)+'</strong>':''}
+                                    🕐 ${dateStr}${!isWorkRejection && !isVerified && h.changed_by ? ' · <strong style="color:#6b7280;">'+esc(h.changed_by.name)+'</strong>' : ''}
                                 </p>
                             </div>
                         </div>`;

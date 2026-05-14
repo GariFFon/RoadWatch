@@ -18,11 +18,12 @@ class ComplaintOptionsController extends Controller
     {
         return response()->json([
             'statuses' => [
-                ['value' => 'pending',      'label' => 'Pending',       'icon' => '⏳'],
-                ['value' => 'under_review', 'label' => 'Under Review',  'icon' => '🔍'],
-                ['value' => 'in_progress',  'label' => 'In Progress',   'icon' => '🔧'],
-                ['value' => 'resolved',     'label' => 'Resolved',      'icon' => '✅'],
-                ['value' => 'rejected',     'label' => 'Rejected',      'icon' => '❌'],
+                ['value' => 'pending',               'label' => 'Pending',               'icon' => '⏳'],
+                ['value' => 'under_review',          'label' => 'Under Review',          'icon' => '🔍'],
+                ['value' => 'in_progress',           'label' => 'In Progress',           'icon' => '🔧'],
+                ['value' => 'awaiting_verification', 'label' => 'Awaiting Verification', 'icon' => '🕐'],
+                ['value' => 'verified',              'label' => 'Verified ✓',            'icon' => '✅'],
+                ['value' => 'rejected',              'label' => 'Rejected',              'icon' => '❌'],
             ],
             'severities' => [
                 ['value' => 'low',       'label' => 'Low',       'icon' => '🟢'],

@@ -21,37 +21,33 @@ class ComplaintController extends Controller
     public function show(Complaint $complaint): ComplaintResource
     {
         abort_unless($complaint->assigned_to === auth()->id(), 403);
-        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'user:id,name']);
+        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'user:id,name', 'assignedEngineer:id,name']);
         return new ComplaintResource($complaint);
     }
 
     public function updateStatus(Request $request, Complaint $complaint): JsonResponse
     {
         abort_unless($complaint->assigned_to === auth()->id(), 403);
+
         $data = $request->validate([
             'status'  => ['required', 'in:' . implode(',', Complaint::STATUSES)],
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $allowed = Complaint::VALID_TRANSITIONS[$complaint->status] ?? [];
-        if (!in_array($data['status'], $allowed)) {
-            return response()->json(['message' => "Cannot transition from {$complaint->status} to {$data['status']}."], 422);
+        if (!$complaint->canTransitionTo($data['status'])) {
+            return response()->json([
+                'message' => "Cannot transition from [{$complaint->status}] to [{$data['status']}].",
+            ], 422);
         }
 
-        $old = $complaint->status;
-        $complaint->update([
-            'status'      => $data['status'],
-            'resolved_at' => $data['status'] === 'resolved' ? now() : $complaint->resolved_at,
-        ]);
+        // Engineers can only move to awaiting_verification from in_progress — not jump to verified/rejected
+        $engineerAllowed = [Complaint::STATUS_AWAITING_VERIFICATION, Complaint::STATUS_IN_PROGRESS, Complaint::STATUS_UNDER_REVIEW];
+        if (!in_array($data['status'], $engineerAllowed)) {
+            return response()->json(['message' => 'Engineers are not permitted to set this status.'], 403);
+        }
 
-        StatusHistory::create([
-            'complaint_id' => $complaint->id,
-            'old_status'   => $old,
-            'new_status'   => $data['status'],
-            'changed_by'   => auth()->id(),
-            'remarks'      => $data['remarks'] ?? null,
-        ]);
+        $complaint->updateStatus($data['status'], auth()->user(), $data['remarks'] ?? null);
 
-        return response()->json(['message' => 'Status updated.', 'status' => $data['status']]);
+        return response()->json(['message' => 'Status updated.', 'status' => $complaint->fresh()->status]);
     }
 }

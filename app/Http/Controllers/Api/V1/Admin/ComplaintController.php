@@ -46,9 +46,19 @@ class ComplaintController extends Controller
     public function updateStatus(Request $request, Complaint $complaint): JsonResponse
     {
         $data = $request->validate([
-            'status'  => ['required', 'in:pending,under_review,in_progress,resolved,rejected'],
+            'status'  => ['required', 'in:' . implode(',', Complaint::STATUSES)],
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
+
+        // Remarks are MANDATORY when admin rejects engineer work (sends back to in_progress)
+        $isWorkRejection = $complaint->status === Complaint::STATUS_AWAITING_VERIFICATION
+                        && $data['status']    === Complaint::STATUS_IN_PROGRESS;
+        if ($isWorkRejection && empty($data['remarks'])) {
+            return response()->json([
+                'message' => 'A rejection reason is required when sending work back to the engineer.',
+                'errors'  => ['remarks' => ['Rejection reason is required.']],
+            ], 422);
+        }
 
         if (!$complaint->canTransitionTo($data['status'])) {
             return response()->json([

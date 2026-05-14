@@ -320,11 +320,12 @@ async function submitAssign() {
 
 // Status badge configs keyed by value
 const STATUS_COLORS = {
-    pending:      {color:'#92400e', bg:'#fffbeb'},
-    under_review: {color:'#1e40af', bg:'#eff6ff'},
-    in_progress:  {color:'#1d4ed8', bg:'#dbeafe'},
-    resolved:     {color:'#14532d', bg:'#f0fdf4'},
-    rejected:     {color:'#7f1d1d', bg:'#fef2f2'},
+    pending:               {color:'#92400e', bg:'#fffbeb'},
+    under_review:          {color:'#1e40af', bg:'#eff6ff'},
+    in_progress:           {color:'#1d4ed8', bg:'#dbeafe'},
+    awaiting_verification: {color:'#c2410c', bg:'#fff7ed'},
+    verified:              {color:'#14532d', bg:'#f0fdf4'},
+    rejected:              {color:'#7f1d1d', bg:'#fef2f2'},
 };
 const SEV_COLORS = {
     low:       {bg:'#d1fae5', color:'#065f46'},
@@ -499,22 +500,58 @@ async function openDetail(id) {
         document.getElementById('so-timeline').innerHTML = timeline.length
             ? timeline.map((h, i) => {
                 const ns = STATUS_CFG[h.new_status]??{label:h.new_status,color:'#374151',bg:'#f3f4f6',icon:'📌'};
-                const transitionLabel = h.old_status
-                    ? `${h.old_status.replace(/_/g,' ')} → ${h.new_status.replace(/_/g,' ')}`
-                    : 'Complaint Filed';
+                const isWorkRejection = h.old_status === 'awaiting_verification' && h.new_status === 'in_progress';
+                const isVerified      = h.new_status === 'verified';
+                const actor = h.changed_by ? `${esc(h.changed_by.name)} (ID: ${h.changed_by.id})` : 'Admin';
+
+                let dotBg = ns.bg, dotColor = ns.color, dotIcon = ns.icon;
+                let badgeBg = ns.bg, badgeColor = ns.color;
+                let labelHtml, remarksHtml = '';
+
+                if (isWorkRejection) {
+                    dotBg = '#fef2f2'; dotColor = '#991b1b'; dotIcon = '🚫';
+                    badgeBg = '#fef2f2'; badgeColor = '#991b1b';
+                    labelHtml = '🚫 Work Rejected';
+                    remarksHtml = `
+                        <div style="background:#fef2f2;border-left:3px solid #fca5a5;border-radius:0 .375rem .375rem 0;
+                                    padding:.5rem .75rem;margin:.375rem 0;font-size:.78rem;">
+                            <div><span style="font-weight:700;color:#991b1b;">Rejected by:</span>
+                                 <span style="color:#374151;"> ${actor}</span></div>
+                            ${h.remarks ? `<div style="margin-top:.25rem;"><span style="font-weight:700;color:#991b1b;">Reason:</span>
+                                 <span style="color:#374151;font-style:italic;"> "${esc(h.remarks)}"</span></div>` : ''}
+                        </div>`;
+                } else if (isVerified) {
+                    dotBg = '#f0fdf4'; dotColor = '#14532d'; dotIcon = '✅';
+                    badgeBg = '#f0fdf4'; badgeColor = '#14532d';
+                    labelHtml = '✅ Task Completed — Verified';
+                    remarksHtml = `
+                        <div style="background:#f0fdf4;border-left:3px solid #86efac;border-radius:0 .375rem .375rem 0;
+                                    padding:.5rem .75rem;margin:.375rem 0;font-size:.78rem;">
+                            <div><span style="font-weight:700;color:#14532d;">Verified by:</span>
+                                 <span style="color:#374151;"> ${actor}</span></div>
+                            ${h.remarks ? `<div style="margin-top:.25rem;color:#6b7280;font-style:italic;">"${esc(h.remarks)}"</div>` : ''}
+                        </div>`;
+                } else if (!h.old_status) {
+                    labelHtml = '📋 Complaint Filed';
+                    if (h.remarks) remarksHtml = `<p style="font-size:.78rem;color:#6b7280;margin:.25rem 0 0;font-style:italic;">"${esc(h.remarks)}"</p>`;
+                } else {
+                    const from = h.old_status.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const to   = h.new_status.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+                    labelHtml = `${from} → ${to}`;
+                    if (h.remarks) remarksHtml = `<p style="font-size:.78rem;color:#6b7280;margin:.25rem 0 0;font-style:italic;">"${esc(h.remarks)}"</p>`;
+                }
+
+                const dateStr = new Date(h.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
                 return `<div class="so-timeline-step" style="animation-delay:${i*0.05}s;">
-                    <div style="width:24px;height:24px;border-radius:50%;background:${ns.bg};color:${ns.color};
+                    <div style="width:24px;height:24px;border-radius:50%;background:${dotBg};color:${dotColor};
                                 display:flex;align-items:center;justify-content:center;font-size:.75rem;
-                                font-weight:700;flex-shrink:0;border:2px solid ${ns.color}33;">${ns.icon}</div>
+                                font-weight:700;flex-shrink:0;border:2px solid ${dotColor}33;">${dotIcon}</div>
                     <div style="flex:1;min-width:0;padding-top:.1rem;">
-                        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-                            <span style="background:${ns.bg};color:${ns.color};font-size:.7rem;font-weight:700;
-                                         padding:.2rem .625rem;border-radius:9999px;text-transform:capitalize;">${transitionLabel}</span>
-                        </div>
-                        ${h.remarks ? `<p style="font-size:.78rem;color:#6b7280;margin:.25rem 0 0;font-style:italic;">"${esc(h.remarks)}"</p>` : ''}
+                        <span style="background:${badgeBg};color:${badgeColor};font-size:.7rem;font-weight:700;
+                                     padding:.2rem .625rem;border-radius:9999px;display:inline-block;">${labelHtml}</span>
+                        ${remarksHtml}
                         <p style="font-size:.7rem;color:#9ca3af;margin:.2rem 0 0;">
-                            ${new Date(h.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-                            ${h.changed_by ? ` · <strong>${esc(h.changed_by.name)}</strong>` : ''}
+                            ${dateStr}${!isWorkRejection && !isVerified && h.changed_by ? ` · <strong>${esc(h.changed_by.name)}</strong>` : ''}
                         </p>
                     </div>
                 </div>`;
@@ -522,6 +559,7 @@ async function openDetail(id) {
             : `<div style="display:flex;align-items:center;gap:.75rem;color:#9ca3af;font-size:.875rem;padding:.5rem 0;">
                    <span style="font-size:1.5rem;">📭</span> No history yet.
                </div>`;
+
 
         // ── Footer status dropdown — only valid next transitions from backend ──
         const nextStatuses = c.next_statuses ?? [];

@@ -29,31 +29,37 @@ class Complaint extends Model
         self::SEVERITY_EMERGENCY,
     ];
 
-    const STATUS_PENDING      = 'pending';
-    const STATUS_UNDER_REVIEW  = 'under_review';
-    const STATUS_IN_PROGRESS   = 'in_progress';
-    const STATUS_RESOLVED      = 'resolved';
-    const STATUS_REJECTED      = 'rejected';   // optional, from any stage
+    const STATUS_PENDING               = 'pending';
+    const STATUS_UNDER_REVIEW           = 'under_review';
+    const STATUS_IN_PROGRESS            = 'in_progress';
+    const STATUS_AWAITING_VERIFICATION  = 'awaiting_verification'; // engineer done, waiting admin sign-off
+    const STATUS_VERIFIED               = 'verified';              // admin approved — truly complete
+    const STATUS_REJECTED               = 'rejected';              // admin rejected the whole complaint
 
     const STATUSES = [
         self::STATUS_PENDING,
         self::STATUS_UNDER_REVIEW,
         self::STATUS_IN_PROGRESS,
-        self::STATUS_RESOLVED,
+        self::STATUS_AWAITING_VERIFICATION,
+        self::STATUS_VERIFIED,
         self::STATUS_REJECTED,
     ];
 
     /**
      * Valid status transitions.
-     * Pending → Under Review → In Progress → Resolved
-     * Rejected can be set from any non-resolved stage.
+     *
+     * Engineer flow:  pending → under_review → in_progress → awaiting_verification
+     * Admin approval: awaiting_verification → verified  (work accepted)
+     * Admin rejection of work: awaiting_verification → in_progress  (redo, same engineer)
+     * Admin reject complaint: any non-terminal → rejected
      */
     const VALID_TRANSITIONS = [
-        self::STATUS_PENDING      => [self::STATUS_UNDER_REVIEW, self::STATUS_REJECTED],
-        self::STATUS_UNDER_REVIEW => [self::STATUS_IN_PROGRESS,  self::STATUS_REJECTED],
-        self::STATUS_IN_PROGRESS  => [self::STATUS_RESOLVED,      self::STATUS_REJECTED],
-        self::STATUS_RESOLVED     => [],   // terminal state
-        self::STATUS_REJECTED     => [],   // terminal state
+        self::STATUS_PENDING              => [self::STATUS_UNDER_REVIEW, self::STATUS_REJECTED],
+        self::STATUS_UNDER_REVIEW         => [self::STATUS_IN_PROGRESS,  self::STATUS_REJECTED],
+        self::STATUS_IN_PROGRESS          => [self::STATUS_AWAITING_VERIFICATION, self::STATUS_REJECTED],
+        self::STATUS_AWAITING_VERIFICATION => [self::STATUS_VERIFIED, self::STATUS_IN_PROGRESS, self::STATUS_REJECTED],
+        self::STATUS_VERIFIED             => [],   // terminal
+        self::STATUS_REJECTED             => [],   // terminal
     ];
 
     // -------------------------------------------------------------------------
@@ -277,7 +283,17 @@ class Complaint extends Model
 
     public function isResolved(): bool
     {
-        return $this->status === self::STATUS_RESOLVED;
+        return $this->status === self::STATUS_AWAITING_VERIFICATION;
+    }
+
+    public function isAwaitingVerification(): bool
+    {
+        return $this->status === self::STATUS_AWAITING_VERIFICATION;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->status === self::STATUS_VERIFIED;
     }
 
     public function isRejected(): bool
@@ -292,7 +308,7 @@ class Complaint extends Model
 
     public function isTerminal(): bool
     {
-        return in_array($this->status, [self::STATUS_RESOLVED, self::STATUS_REJECTED]);
+        return in_array($this->status, [self::STATUS_VERIFIED, self::STATUS_REJECTED]);
     }
 
     /**
@@ -318,9 +334,13 @@ class Complaint extends Model
         $old = $this->status;
         $this->update(['status' => $newStatus]);
 
-        // Auto-timestamp resolution
-        if ($newStatus === self::STATUS_RESOLVED) {
+        // Auto-timestamp when engineer marks work done (awaiting admin verification)
+        if ($newStatus === self::STATUS_AWAITING_VERIFICATION) {
             $this->update(['resolved_at' => now()]);
+        }
+        // Clear resolved_at if admin sends work back to in_progress
+        if ($newStatus === self::STATUS_IN_PROGRESS && $old === self::STATUS_AWAITING_VERIFICATION) {
+            $this->update(['resolved_at' => null]);
         }
 
         // Write to status_histories audit log
@@ -379,12 +399,13 @@ class Complaint extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING      => 'Pending',
-            self::STATUS_UNDER_REVIEW => 'Under Review',
-            self::STATUS_IN_PROGRESS  => 'In Progress',
-            self::STATUS_RESOLVED     => 'Resolved',
-            self::STATUS_REJECTED     => 'Rejected',
-            default                   => ucfirst($this->status),
+            self::STATUS_PENDING              => 'Pending',
+            self::STATUS_UNDER_REVIEW         => 'Under Review',
+            self::STATUS_IN_PROGRESS          => 'In Progress',
+            self::STATUS_AWAITING_VERIFICATION => 'Awaiting Verification',
+            self::STATUS_VERIFIED             => 'Verified ✓',
+            self::STATUS_REJECTED             => 'Rejected',
+            default                           => ucfirst($this->status),
         };
     }
 
@@ -394,12 +415,13 @@ class Complaint extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING      => 'yellow',
-            self::STATUS_UNDER_REVIEW => 'blue',
-            self::STATUS_IN_PROGRESS  => 'indigo',
-            self::STATUS_RESOLVED     => 'green',
-            self::STATUS_REJECTED     => 'red',
-            default                   => 'gray',
+            self::STATUS_PENDING              => 'yellow',
+            self::STATUS_UNDER_REVIEW         => 'blue',
+            self::STATUS_IN_PROGRESS          => 'indigo',
+            self::STATUS_AWAITING_VERIFICATION => 'orange',
+            self::STATUS_VERIFIED             => 'green',
+            self::STATUS_REJECTED             => 'red',
+            default                           => 'gray',
         };
     }
 
