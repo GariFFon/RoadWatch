@@ -104,7 +104,11 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="eng-signout" title="Sign out">🚪</button>
+                <button type="submit" class="eng-signout" title="Sign out">
+                    <svg style="width:1.125rem;height:1.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </form>
         </div>
     </div>
@@ -114,19 +118,83 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 <div class="eng-main">
     <header class="eng-topbar">
         <span class="eng-topbar-title">@yield('page-title', 'Engineer Panel')</span>
-        <div style="display:flex;align-items:center;gap:.75rem;">
-            @if(auth()->user()->profile_photo_url)
-                <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
-                     style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;">
-            @else
-                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);
-                            display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+
+        {{-- Topbar user dropdown --}}
+        <style>
+            @keyframes engDropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+            #eng-user-menu{animation:engDropIn .15s ease;}
+        </style>
+        <div style="position:relative;">
+            <button onclick="document.getElementById('eng-user-menu').style.display=document.getElementById('eng-user-menu').style.display==='block'?'none':'block'"
+                    style="display:flex;align-items:center;gap:.5rem;background:#f9fafb;border:1.5px solid #e5e7eb;
+                           border-radius:9999px;padding:.3rem .75rem .3rem .3rem;cursor:pointer;
+                           transition:border-color .15s;font-family:inherit;"
+                    onmouseover="this.style.borderColor='#7dd3fc'" onmouseout="this.style.borderColor='#e5e7eb'">
+                @if(auth()->user()->profile_photo_url)
+                    <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
+                         style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+                @else
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);
+                                display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                    </div>
+                @endif
+                <span style="font-size:.8125rem;font-weight:600;color:#374151;">{{ auth()->user()->name }}</span>
+                <svg style="width:12px;height:12px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div id="eng-user-menu" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:220px;
+                 background:#fff;border:1.5px solid #f1f1f1;border-radius:1rem;
+                 box-shadow:0 16px 48px rgba(0,0,0,.12);z-index:500;overflow:hidden;">
+
+                {{-- Profile header --}}
+                <div style="padding:.875rem 1rem;border-bottom:1px solid #f3f4f6;display:flex;gap:.625rem;align-items:center;">
+                    @if(auth()->user()->profile_photo_url)
+                        <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
+                             style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                    @else
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);
+                                    display:flex;align-items:center;justify-content:center;
+                                    color:#fff;font-size:.875rem;font-weight:700;flex-shrink:0;">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                    @endif
+                    <div style="min-width:0;">
+                        <div style="font-size:.8125rem;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
+                        <div style="font-size:.72rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->email }}</div>
+                        <span style="font-size:.65rem;font-weight:700;background:#e0f2fe;color:#0284c7;padding:.1rem .4rem;border-radius:4px;">Engineer</span>
+                    </div>
                 </div>
-            @endif
-            <span style="font-size:.875rem;font-weight:600;color:#374151;">{{ auth()->user()->name }}</span>
+
+                {{-- Sign Out --}}
+                <div style="padding:.5rem;">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                style="width:100%;display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
+                                       background:none;border:none;border-radius:.5rem;font-size:.8125rem;
+                                       font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;
+                                       transition:background .15s;text-align:left;"
+                                onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                            🚪 Sign Out
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </header>
+
+    <script>
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('eng-user-menu');
+            if (menu && !e.target.closest('[onclick*="eng-user-menu"]') && !menu.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+
 
     <main class="eng-content">
         @yield('content')
