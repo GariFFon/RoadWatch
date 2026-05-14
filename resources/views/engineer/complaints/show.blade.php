@@ -330,8 +330,10 @@ async function loadDetail() {
             }).join('');
         }
 
-        // ── Update form (uses backend next_statuses — engineer only sees allowed transitions) ──
-        renderUpdateForm(c.status, c.next_statuses ?? []);
+        // ── Update form: use LOCAL transition map for engineers.
+        // awaiting_verification always = [] on the engineer side (admin-only decision).
+        const engineerAllowed = TRANSITIONS[c.status] ?? [];
+        renderUpdateForm(c.status, engineerAllowed);
 
         // ── READ-ONLY mode for verified complaints ──────────────────────────
         if (c.status === 'verified') {
