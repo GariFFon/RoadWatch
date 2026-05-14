@@ -350,6 +350,7 @@ async function loadDetail() {
                                 <div style="color:#9ca3af;margin-top:.2rem;">🕐 ${when}</div>
                             </div>`;
                         })()}
+                        <div id="eng-rating-display" style="display:none;"></div>
                         <a href="{{ route('engineer.complaints.completed') }}"
                            style="display:inline-flex;align-items:center;gap:.375rem;margin-top:1rem;
                                   background:#14532d;color:#fff;border-radius:.5rem;padding:.5rem 1rem;
@@ -373,6 +374,34 @@ async function loadDetail() {
 
             // 4. Make after-media non-deletable (re-render without delete buttons)
             renderAfterMedia(after, false);
+
+            // 5. Show admin's rating if already given
+            const ratingEl = document.getElementById('eng-rating-display');
+            if (ratingEl) {
+                if (c.engineer_rating) {
+                    const r = c.engineer_rating;
+                    const stars = '★'.repeat(r.score) + '☆'.repeat(5 - r.score);
+                    ratingEl.style.display = 'block';
+                    ratingEl.innerHTML = `
+                        <div style="margin-top:1rem;padding:.875rem;background:#fff;border-radius:.75rem;
+                                    border:1.5px solid #fde68a;text-align:left;">
+                            <p style="font-size:.72rem;font-weight:700;color:#92400e;margin:0 0 .375rem;">⭐ Admin's Performance Rating</p>
+                            <div style="font-size:1.5rem;color:#f59e0b;letter-spacing:.08em;margin-bottom:.2rem;">${stars}</div>
+                            <div style="font-size:.875rem;font-weight:700;color:#374151;">${r.emoji} ${esc(r.label)} (${r.score}/5)</div>
+                            ${r.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.25rem;">"${esc(r.comment)}"</div>` : ''}
+                            <div style="font-size:.7rem;color:#9ca3af;margin-top:.25rem;">
+                                Rated by ${esc(r.rated_by?.name ?? 'Admin')}
+                            </div>
+                        </div>`;
+                } else {
+                    ratingEl.style.display = 'block';
+                    ratingEl.innerHTML = `
+                        <div style="margin-top:.875rem;padding:.625rem;background:rgba(255,255,255,.6);
+                                    border-radius:.5rem;border:1px dashed #fde68a;text-align:center;font-size:.75rem;color:#92400e;">
+                            ⏳ Admin hasn't rated your work yet.
+                        </div>`;
+                }
+            }
         }
         // ────────────────────────────────────────────────────────────────────
 

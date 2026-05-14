@@ -86,6 +86,20 @@ class ComplaintResource extends JsonResource
                     'role' => $this->assignedEngineer->role,
                 ] : null
             ),
+
+            // Admin rating of engineer's work quality (1–5)
+            'engineer_rating' => $this->engineer_rating ? [
+                'score'    => $this->engineer_rating,
+                'label'    => [1=>'Very Poor',2=>'Poor',3=>'Average',4=>'Good',5=>'Excellent'][$this->engineer_rating] ?? '—',
+                'emoji'    => [1=>'😡',2=>'😞',3=>'😐',4=>'😊',5=>'😍'][$this->engineer_rating] ?? '⭐',
+                'stars'    => str_repeat('★', $this->engineer_rating) . str_repeat('☆', 5 - $this->engineer_rating),
+                'comment'  => $this->engineer_rating_comment,
+                'rated_by' => $this->rated_by ? [
+                    'id'   => $this->rated_by,
+                    'name' => $this->ratedBy?->name ?? 'Admin',
+                ] : null,
+                'rated_at' => $this->rated_at?->toIso8601String(),
+            ] : null,
         ];
     }
 }

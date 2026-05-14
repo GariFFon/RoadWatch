@@ -59,6 +59,7 @@ Route::middleware(['auth:web'])->group(function () {
         Route::get('complaints/{complaint}',            [\App\Http\Controllers\Api\V1\Admin\ComplaintController::class, 'show']);
         Route::patch('complaints/{complaint}/assign',   [\App\Http\Controllers\Api\V1\Admin\ComplaintController::class, 'assign']);
         Route::patch('complaints/{complaint}/status',   [\App\Http\Controllers\Api\V1\Admin\ComplaintController::class, 'updateStatus']);
+        Route::post ('complaints/{complaint}/rate',     [\App\Http\Controllers\Api\V1\Admin\ComplaintController::class, 'rateEngineer']); // POST /api/v1/admin/complaints/{id}/rate
         Route::get('users',                             [\App\Http\Controllers\Api\V1\Admin\UserController::class, 'index']);
         Route::patch('users/{user}/role',               [\App\Http\Controllers\Api\V1\Admin\UserController::class, 'updateRole']);
     });

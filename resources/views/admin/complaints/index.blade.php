@@ -84,6 +84,18 @@
                     onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">✕</button>
         </div>
 
+        {{-- ── Read-only banner (shown only for verified complaints) ── --}}
+        <div id="so-readonly-banner"
+             style="display:none;align-items:center;gap:.625rem;
+                    background:linear-gradient(90deg,#f0fdf4,#dcfce7);
+                    border-bottom:1.5px solid #86efac;
+                    padding:.625rem 1.5rem;flex-shrink:0;">
+            <span style="font-size:1rem;">🔒</span>
+            <span style="font-size:.8125rem;font-weight:700;color:#14532d;">
+                READ ONLY — Task Verified &amp; Closed. No further admin actions available.
+            </span>
+        </div>
+
         {{-- ── Loading state ── --}}
         <div id="so-loading" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.875rem;">
             <div style="width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:spin .7s linear infinite;"></div>
@@ -142,12 +154,44 @@
             <p style="font-size:.75rem;font-weight:700;color:#374151;margin:0 0 .625rem;">🛡 Admin: Change Status</p>
             <div style="display:flex;gap:.625rem;align-items:center;flex-wrap:wrap;">
                 <select id="so-new-status" class="adm-input adm-select" style="flex:1;min-width:140px;">
-                    <option value="">— Select new status —</option>
+                    <option value="">— Select next status —</option>
                 </select>
                 <input id="so-remarks" type="text" class="adm-input" placeholder="Remarks (optional)" style="flex:2;min-width:160px;">
                 <button onclick="adminUpdateStatus()" id="so-update-btn" class="adm-btn adm-btn-primary">✅ Update</button>
             </div>
             <div id="so-update-error" style="display:none;color:#dc2626;font-size:.8125rem;margin-top:.5rem;"></div>
+        </div>
+
+        {{-- ── Rating panel (only for verified complaints) ── --}}
+        <div id="so-rating-panel" style="display:none;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;flex-shrink:0;
+             background:linear-gradient(135deg,#f0fdf4,#fafff8);">
+            <p style="font-size:.75rem;font-weight:700;color:#14532d;margin:0 0 .75rem;">⭐ Rate Engineer's Work Quality</p>
+
+            {{-- Already rated display --}}
+            <div id="so-rating-display" style="display:none;"></div>
+
+            {{-- Star picker --}}
+            <div id="so-rating-form">
+                <div style="display:flex;align-items:center;gap:.25rem;margin-bottom:.75rem;" id="so-stars">
+                    @foreach([1,2,3,4,5] as $star)
+                    <button onclick="selectStar({{ $star }})" id="star-{{ $star }}"
+                            style="font-size:1.75rem;background:none;border:none;cursor:pointer;padding:.1rem;
+                                   transition:transform .1s;line-height:1;"
+                            onmouseover="hoverStar({{ $star }})"
+                            onmouseout="unhoverStars()">☆</button>
+                    @endforeach
+                    <span id="so-star-label" style="font-size:.78rem;font-weight:700;color:#6b7280;margin-left:.5rem;"></span>
+                </div>
+                <textarea id="so-rating-comment" class="adm-input" placeholder="Optional comment about the engineer's work…"
+                          style="width:100%;resize:vertical;min-height:60px;font-size:.8125rem;margin-bottom:.5rem;"></textarea>
+                <div style="display:flex;gap:.5rem;align-items:center;">
+                    <button onclick="submitRating()" id="so-rating-btn"
+                            class="adm-btn adm-btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);">
+                        ⭐ Submit Rating
+                    </button>
+                    <span id="so-rating-error" style="color:#dc2626;font-size:.78rem;display:none;"></span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -254,9 +298,12 @@ async function loadComplaints() {
                                 <button class="adm-btn adm-btn-sm adm-btn-outline" style="margin-right:.375rem;" onclick="openDetail(${c.id})">
                                     🔍 View
                                 </button>
-                                <button class="adm-btn adm-btn-sm adm-btn-primary" onclick="openAssignModal(${c.id},'${esc(c.title)}','${esc(c.complaint_number)}')">
-                                    👷 Assign
-                                </button>
+                                ${c.status === 'verified'
+                                    ? `<span style="display:inline-flex;align-items:center;gap:.25rem;background:#f0fdf4;color:#14532d;border:1px solid #86efac;border-radius:.375rem;padding:.2rem .625rem;font-size:.72rem;font-weight:700;">🔒 Closed</span>`
+                                    : `<button class="adm-btn adm-btn-sm adm-btn-primary" onclick="openAssignModal(${c.id},'${esc(c.title)}','${esc(c.complaint_number)}')">
+                                            👷 Assign
+                                       </button>`
+                                }
                             </td>
                         </tr>`;
                     }).join('')}
@@ -402,6 +449,7 @@ async function openDetail(id) {
     document.getElementById('so-loading').style.display  = 'flex';
     document.getElementById('so-content').style.display  = 'none';
     document.getElementById('so-footer').style.display   = 'none';
+    document.getElementById('so-readonly-banner').style.display = 'none';
 
     try {
         const detailRes = await axios.get(`/api/v1/admin/complaints/${id}`);
@@ -584,10 +632,26 @@ async function openDetail(id) {
         document.getElementById('so-remarks').value = '';
         document.getElementById('so-update-error').style.display = 'none';
 
+        // ── Rating panel & read-only mode for verified complaints ──
+        const ratingPanel = document.getElementById('so-rating-panel');
+        const soFooter    = document.getElementById('so-footer');
+        const soReadOnly  = document.getElementById('so-readonly-banner');
+
+        if (c.status === 'verified') {
+            // Show rating, hide status-change footer
+            ratingPanel.style.display = 'block';
+            renderRatingPanel(c.engineer_rating);
+            soFooter.style.display    = 'none';
+            if (soReadOnly) soReadOnly.style.display = 'flex';
+        } else {
+            ratingPanel.style.display = 'none';
+            soFooter.style.display    = 'block';
+            if (soReadOnly) soReadOnly.style.display = 'none';
+        }
+
         // Show
         document.getElementById('so-loading').style.display = 'none';
         document.getElementById('so-content').style.display = 'flex';
-        document.getElementById('so-footer').style.display  = 'block';
 
     } catch(e) {
         document.getElementById('so-loading').innerHTML =
@@ -627,6 +691,81 @@ async function adminUpdateStatus() {
         document.getElementById('so-update-error').textContent = e.response?.data?.message ?? 'Update failed.';
         document.getElementById('so-update-error').style.display = 'block';
         btn.disabled = false; btn.textContent = '✅ Update';
+    }
+}
+
+// ── Star rating helpers ─────────────────────────────────────────────────────
+let selectedStarValue = 0;
+const STAR_LABELS = {1:'Very Poor 😡',2:'Poor 😞',3:'Average 😐',4:'Good 😊',5:'Excellent 😍'};
+
+function renderRatingPanel(existingRating) {
+    selectedStarValue = existingRating ? existingRating.score : 0;
+    const display = document.getElementById('so-rating-display');
+    const form    = document.getElementById('so-rating-form');
+
+    if (existingRating) {
+        display.style.display = 'block';
+        const stars  = '★'.repeat(existingRating.score) + '☆'.repeat(5 - existingRating.score);
+        const ratedBy = existingRating.rated_by ? esc(existingRating.rated_by.name) : 'Admin';
+        display.innerHTML = `
+            <div style="background:#fff;border:1px solid #bbf7d0;border-radius:.625rem;padding:.625rem .875rem;
+                        margin-bottom:.75rem;font-size:.8125rem;">
+                <div style="font-size:1.25rem;color:#f59e0b;letter-spacing:.1em;">${stars}</div>
+                <div style="font-weight:700;color:#15803d;">${esc(existingRating.label)} — ${existingRating.score}/5</div>
+                ${existingRating.comment ? `<div style="color:#6b7280;margin-top:.2rem;font-style:italic;">"${esc(existingRating.comment)}"</div>` : ''}
+                <div style="color:#9ca3af;font-size:.72rem;margin-top:.2rem;">Rated by ${ratedBy}</div>
+            </div>
+            <p style="font-size:.72rem;color:#6b7280;margin:0 0 .5rem;">Update rating:</p>`;
+    } else {
+        display.style.display = 'none';
+    }
+
+    form.style.display = 'block';
+    renderStars(selectedStarValue);
+    document.getElementById('so-rating-comment').value = existingRating ? (existingRating.comment ?? '') : '';
+    document.getElementById('so-rating-btn').textContent = existingRating ? '⭐ Update Rating' : '⭐ Submit Rating';
+}
+
+function renderStars(filled) {
+    for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById('star-' + i);
+        if (!btn) continue;
+        btn.textContent = i <= filled ? '★' : '☆';
+        btn.style.color = i <= filled ? '#f59e0b' : '#d1d5db';
+        btn.style.transform = i <= filled ? 'scale(1.15)' : 'scale(1)';
+    }
+    const label = document.getElementById('so-star-label');
+    if (label) label.textContent = filled ? STAR_LABELS[filled] : 'Select a rating';
+}
+
+function selectStar(n) { selectedStarValue = n; renderStars(n); }
+function hoverStar(n)  { renderStars(n); }
+function unhoverStars(){ renderStars(selectedStarValue); }
+
+async function submitRating() {
+    const err = document.getElementById('so-rating-error');
+    if (!selectedStarValue) {
+        err.textContent = 'Please select a star rating first.';
+        err.style.display = 'inline';
+        return;
+    }
+    const btn     = document.getElementById('so-rating-btn');
+    const comment = document.getElementById('so-rating-comment').value.trim();
+    btn.disabled  = true;
+    btn.textContent = '⏳ Saving…';
+    err.style.display = 'none';
+    try {
+        await axios.post(`/api/v1/admin/complaints/${detailComplaintId}/rate`, {
+            rating:  selectedStarValue,
+            comment: comment || null,
+        });
+        btn.textContent = '✅ Saved!';
+        setTimeout(() => openDetail(detailComplaintId), 1000); // refresh panel
+    } catch(e) {
+        err.textContent = e.response?.data?.message ?? 'Failed to save rating.';
+        err.style.display = 'inline';
+        btn.disabled = false;
+        btn.textContent = '⭐ Submit Rating';
     }
 }
 </script>

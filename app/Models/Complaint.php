@@ -86,6 +86,10 @@ class Complaint extends Model
         'estimated_completion',
         'resolved_at',
         'is_anonymous',
+        'engineer_rating',
+        'engineer_rating_comment',
+        'rated_by',
+        'rated_at',
     ];
 
     // -------------------------------------------------------------------------
@@ -95,14 +99,16 @@ class Complaint extends Model
     protected function casts(): array
     {
         return [
-            'latitude'             => 'decimal:7',
-            'longitude'            => 'decimal:7',
-            'votes_count'          => 'integer',
-            'views_count'          => 'integer',
-            'is_duplicate'         => 'boolean',
-            'is_anonymous'         => 'boolean',
-            'resolved_at'          => 'datetime',
-            'estimated_completion' => 'date',
+            'latitude'               => 'decimal:7',
+            'longitude'              => 'decimal:7',
+            'votes_count'            => 'integer',
+            'views_count'            => 'integer',
+            'is_duplicate'           => 'boolean',
+            'is_anonymous'           => 'boolean',
+            'resolved_at'            => 'datetime',
+            'estimated_completion'   => 'date',
+            'engineer_rating'        => 'integer',
+            'rated_at'               => 'datetime',
         ];
     }
 
@@ -171,6 +177,30 @@ class Complaint extends Model
     public function assignedEngineer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * The admin who rated the engineer's work.
+     */
+    public function ratedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rated_by');
+    }
+
+    /**
+     * Rate the engineer's work (admin only).
+     */
+    public function rateEngineer(int $rating, ?string $comment, User $admin): void
+    {
+        if ($rating < 1 || $rating > 5) {
+            throw new \InvalidArgumentException('Rating must be between 1 and 5.');
+        }
+        $this->update([
+            'engineer_rating'         => $rating,
+            'engineer_rating_comment' => $comment,
+            'rated_by'                => $admin->id,
+            'rated_at'                => now(),
+        ]);
     }
 
     /**

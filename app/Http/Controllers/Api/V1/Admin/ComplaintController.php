@@ -28,6 +28,7 @@ class ComplaintController extends Controller
             'category',
             'user:id,name,email',
             'assignedEngineer:id,name,email',
+            'ratedBy:id,name',
             'media',                          // includes before + after
             'statusHistories.changedBy:id,name,role',
         ]);
@@ -71,6 +72,36 @@ class ComplaintController extends Controller
         return response()->json([
             'message'   => 'Status updated.',
             'complaint' => new ComplaintResource($complaint->fresh()),
+        ]);
+    }
+
+    /**
+     * POST /api/v1/admin/complaints/{complaint}/rate
+     * Admin rates the quality of engineer's work (1–5 stars).
+     * Can only be done on verified complaints. Allows updating the rating.
+     */
+    public function rateEngineer(Request $request, Complaint $complaint): JsonResponse
+    {
+        abort_unless($complaint->status === Complaint::STATUS_VERIFIED, 422, 'Only verified complaints can be rated.');
+
+        $data = $request->validate([
+            'rating'  => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $complaint->rateEngineer($data['rating'], $data['comment'] ?? null, auth()->user());
+
+        $labels = [1=>'Very Poor',2=>'Poor',3=>'Average',4=>'Good',5=>'Excellent'];
+
+        return response()->json([
+            'message' => "Rated {$data['rating']}/5 — {$labels[$data['rating']]}.",
+            'rating'  => [
+                'score'   => $data['rating'],
+                'label'   => $labels[$data['rating']],
+                'comment' => $data['comment'] ?? null,
+                'rated_by'=> auth()->user()->name,
+                'rated_at'=> now()->toIso8601String(),
+            ],
         ]);
     }
 }
