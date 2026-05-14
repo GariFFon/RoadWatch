@@ -229,7 +229,7 @@ function renderAll(c) {
                         <div style="width:32px;height:32px;border-radius:9999px;background:#fff;border:3px solid ${hs.border};flex-shrink:0;z-index:1;display:flex;align-items:center;justify-content:center;font-size:0.875rem;">${firstChar}</div>
                         <div style="flex:1;min-width:0;padding-top:0.125rem;">
                             <div style="font-size:0.8125rem;font-weight:700;color:#111827;">
-                                ${capWords(h.old_status)} → ${capWords(h.new_status)}
+                                ${h.old_status ? capWords(h.old_status) + ' → ' + capWords(h.new_status) : '📋 Complaint Filed'}
                             </div>
                             ${h.remarks ? `<p style="font-size:0.75rem;color:#6b7280;margin:0.25rem 0 0;font-style:italic;">"${escHtml(h.remarks)}"</p>` : ''}
                             <div style="display:flex;gap:0.75rem;margin-top:0.25rem;font-size:0.7rem;color:#9ca3af;">

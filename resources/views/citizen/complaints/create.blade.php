@@ -360,8 +360,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const res = await axios.post('/api/v1/citizen/complaints', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            // Redirect to the new complaint's detail page
-            window.location.href = `/citizen/complaints/${res.data.complaint.id}`;
+            // Redirect to complaints list with success snackbar
+            window.location.href = '/citizen/complaints?filed=1';
 
         } catch (err) {
             btn.disabled = false; btn.textContent = '🚨 Submit Complaint';

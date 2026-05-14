@@ -124,6 +124,19 @@ class Complaint extends Model
                 $complaint->complaint_number = static::generateComplaintNumber();
             }
         });
+
+        // After complaint is saved, write the initial "pending" status history entry
+        // so the timeline always shows when the complaint was first filed.
+        static::created(function (Complaint $complaint) {
+            StatusHistory::create([
+                'complaint_id'           => $complaint->id,
+                'changed_by'             => $complaint->user_id,   // filed by the citizen themselves
+                'old_status'             => null,                   // no previous status
+                'new_status'             => self::STATUS_PENDING,
+                'remarks'                => 'Complaint filed by citizen.',
+                'time_in_previous_status'=> 0,
+            ]);
+        });
     }
 
     public static function generateComplaintNumber(): string

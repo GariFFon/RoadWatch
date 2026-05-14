@@ -54,84 +54,97 @@
 </div>
 
 {{-- ── Complaint Detail Slide-over ── --}}
-<div id="detail-slideover"
-     style="display:none;position:fixed;inset:0;z-index:300;display:none;">
+<div id="detail-slideover" style="display:none;position:fixed;inset:0;z-index:300;">
     {{-- Backdrop --}}
     <div id="slideover-backdrop"
-         style="position:absolute;inset:0;background:rgba(0,0,0,.45);"
+         style="position:absolute;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);transition:opacity .3s;"
          onclick="closeDetail()"></div>
     {{-- Panel --}}
     <div id="slideover-panel"
-         style="position:absolute;top:0;right:0;bottom:0;width:720px;max-width:100vw;
-                background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.15);
+         style="position:absolute;top:0;right:0;bottom:0;width:760px;max-width:100vw;
+                background:#f8fafc;box-shadow:-16px 0 60px rgba(0,0,0,.18);
                 display:flex;flex-direction:column;overflow:hidden;
-                transform:translateX(100%);transition:transform .3s ease;">
-        {{-- Header --}}
-        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-            <div>
-                <h2 id="so-title" style="font-size:1rem;font-weight:700;color:#111827;margin:0;"></h2>
-                <p id="so-number" style="font-size:.78rem;color:#9ca3af;margin:.1rem 0 0;"></p>
+                transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);">
+
+        {{-- ── Header bar ── --}}
+        <div style="padding:1.125rem 1.5rem;background:#fff;border-bottom:1px solid #e5e7eb;
+                    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+                    box-shadow:0 1px 4px rgba(0,0,0,.04);">
+            <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;">
+                    <h2 id="so-title" style="font-size:1.0625rem;font-weight:700;color:#111827;margin:0;"></h2>
+                    <span id="so-number" style="font-size:.7rem;font-family:monospace;background:#f3f4f6;color:#6b7280;padding:.15rem .625rem;border-radius:9999px;"></span>
+                </div>
+                <div id="so-badges" style="display:flex;gap:.375rem;flex-wrap:wrap;margin-top:.5rem;"></div>
             </div>
             <button onclick="closeDetail()"
-                    style="background:none;border:none;font-size:1.375rem;cursor:pointer;color:#9ca3af;
-                           width:32px;height:32px;display:flex;align-items:center;justify-content:center;
-                           border-radius:50%;transition:background .15s;"
-                    onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">✕</button>
+                    style="background:#f3f4f6;border:none;font-size:1.125rem;cursor:pointer;color:#6b7280;
+                           width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+                           border-radius:50%;transition:background .15s;flex-shrink:0;margin-left:1rem;"
+                    onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">✕</button>
         </div>
 
-        {{-- Loading --}}
-        <div id="so-loading" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.75rem;">
-            <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:spin .7s linear infinite;"></div>
-            <p style="color:#9ca3af;font-size:.875rem;">Loading complaint…</p>
+        {{-- ── Loading state ── --}}
+        <div id="so-loading" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.875rem;">
+            <div style="width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:spin .7s linear infinite;"></div>
+            <p style="color:#9ca3af;font-size:.875rem;margin:0;">Loading complaint…</p>
         </div>
 
-        {{-- Content --}}
-        <div id="so-content" style="display:none;flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;">
+        {{-- ── Scrollable content ── --}}
+        <div id="so-content" style="display:none;flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
 
-            {{-- Badges row --}}
-            <div id="so-badges" style="display:flex;gap:.5rem;flex-wrap:wrap;"></div>
+            {{-- Stats strip --}}
+            <div id="so-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;"></div>
 
-            {{-- Before / After photos --}}
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                <div>
-                    <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.625rem;">📸 Before (Citizen)</p>
-                    <div id="so-before" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;"></div>
-                </div>
-                <div>
-                    <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.625rem;">✅ After (Engineer Work)</p>
-                    <div id="so-after" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;"></div>
+            {{-- Media gallery --}}
+            <div id="so-media-section" style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;padding:1.125rem;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .875rem;">📎 Media Attachments</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .5rem;">📸 Before (Citizen)</p>
+                        <div id="so-before" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;"></div>
+                    </div>
+                    <div>
+                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .5rem;">✅ After (Engineer Work)</p>
+                        <div id="so-after" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;"></div>
+                    </div>
                 </div>
             </div>
 
             {{-- Description --}}
-            <div>
-                <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">📝 Description</p>
-                <p id="so-description" style="font-size:.875rem;color:#374151;line-height:1.7;background:#f9fafb;border-radius:.75rem;padding:.875rem;"></p>
+            <div style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;padding:1.125rem;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .625rem;">📝 Description</p>
+                <p id="so-description" style="font-size:.875rem;color:#374151;line-height:1.75;margin:0;"></p>
             </div>
 
-            {{-- Meta row --}}
-            <div id="so-meta" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;background:#f9fafb;border-radius:.875rem;padding:1rem;"></div>
+            {{-- Meta + Map --}}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;padding:1.125rem;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                    <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .875rem;">ℹ️ Details</p>
+                    <div id="so-meta" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+                </div>
+                <div style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                    <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0;padding:.875rem 1.125rem .5rem;">📍 Location</p>
+                    <div id="so-map" style="height:200px;"></div>
+                </div>
+            </div>
 
-            {{-- Timeline --}}
-            <div>
-                <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.875rem;">📈 Status Timeline</p>
-                <div id="so-timeline" style="display:flex;flex-direction:column;"></div>
+            {{-- Status Timeline --}}
+            <div style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;padding:1.125rem;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0 0 1rem;">📈 Status Timeline</p>
+                <div id="so-timeline"></div>
             </div>
 
         </div>
 
-        {{-- Footer: admin status change --}}
-        <div id="so-footer" style="display:none;padding:1.25rem 1.5rem;border-top:1px solid #f3f4f6;flex-shrink:0;background:#fafafa;">
-            <p style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:.625rem;">🛡 Admin: Change Status</p>
-            <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;">
-                <div style="flex:1;min-width:140px;">
-                    <select id="so-new-status" class="adm-input adm-select" style="width:100%;">
-                        <option value="">— Select new status —</option>
-                    </select>
-                </div>
-                <div style="flex:2;min-width:180px;">
-                    <input id="so-remarks" type="text" class="adm-input" placeholder="Remarks (optional)" style="width:100%;">
-                </div>
+        {{-- ── Footer: Admin status change ── --}}
+        <div id="so-footer" style="display:none;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;flex-shrink:0;background:#fff;">
+            <p style="font-size:.75rem;font-weight:700;color:#374151;margin:0 0 .625rem;">🛡 Admin: Change Status</p>
+            <div style="display:flex;gap:.625rem;align-items:center;flex-wrap:wrap;">
+                <select id="so-new-status" class="adm-input adm-select" style="flex:1;min-width:140px;">
+                    <option value="">— Select new status —</option>
+                </select>
+                <input id="so-remarks" type="text" class="adm-input" placeholder="Remarks (optional)" style="flex:2;min-width:160px;">
                 <button onclick="adminUpdateStatus()" id="so-update-btn" class="adm-btn adm-btn-primary">✅ Update</button>
             </div>
             <div id="so-update-error" style="display:none;color:#dc2626;font-size:.8125rem;margin-top:.5rem;"></div>
@@ -141,10 +154,17 @@
 
 <style>
 @keyframes spin{to{transform:rotate(360deg)}}
-.so-timeline-step{display:flex;gap:.75rem;padding-bottom:1rem;position:relative;}
-.so-timeline-step::before{content:'';position:absolute;left:10px;top:22px;bottom:0;width:2px;background:#f3f4f6;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.so-timeline-step{display:flex;gap:.75rem;padding-bottom:1.125rem;position:relative;animation:fadeUp .3s ease both;}
+.so-timeline-step::before{content:'';position:absolute;left:11px;top:24px;bottom:0;width:2px;background:linear-gradient(to bottom,#e5e7eb,transparent);}
 .so-timeline-step:last-child::before{display:none;}
+.so-stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:.875rem;padding:.875rem 1rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.so-meta-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f9fafb;font-size:.8125rem;}
+.so-meta-row:last-child{border-bottom:none;}
+.so-media-thumb{aspect-ratio:1;border-radius:.625rem;overflow:hidden;border:1px solid #e5e7eb;background:#f3f4f6;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.so-media-thumb:hover{transform:scale(1.03);box-shadow:0 4px 12px rgba(0,0,0,.12);}
 </style>
+
 
 <script>
 // Will be populated from GET /api/v1/complaint-options
@@ -370,6 +390,8 @@ document.addEventListener('DOMContentLoaded', loadOptions);
 // ── Slide-over detail ─────────────────────────────────────────────────────────
 let detailComplaintId = null;
 
+let soMap = null; // Leaflet map instance
+
 async function openDetail(id) {
     detailComplaintId = id;
     const so = document.getElementById('detail-slideover');
@@ -386,65 +408,128 @@ async function openDetail(id) {
             fetch('/api/v1/complaint-options').then(r => r.json()),
         ]);
         const c = detailRes.data.data;
+        const s   = STATUS_CFG[c.status]  ?? {label:c.status,  color:'#374151', bg:'#f3f4f6', icon:'📌'};
+        const sev = SEV_CFG[c.severity]   ?? {bg:'#f3f4f6', color:'#374151', label:c.severity, icon:'•'};
 
-        // Header
+        // ── Header ──────────────────────────────────────────────────────────
         document.getElementById('so-title').textContent  = c.title;
         document.getElementById('so-number').textContent = c.complaint_number;
-
-        // Badges
-        const s   = STATUS_CFG[c.status]  ?? {label:c.status,  color:'#374151', bg:'#f3f4f6', icon:'📌'};
-        const sev = SEV_CFG[c.severity]   ?? {bg:'#f3f4f6', color:'#374151'};
         document.getElementById('so-badges').innerHTML =
-            `<span style="background:${s.bg};color:${s.color};font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:9999px;">${s.icon} ${s.label}</span>` +
-            `<span style="background:${sev.bg};color:${sev.color};font-size:.78rem;font-weight:700;padding:.25rem .75rem;border-radius:9999px;">${(c.severity??'').charAt(0).toUpperCase()+(c.severity??'').slice(1)}</span>` +
-            (c.category ? `<span style="background:#f3f4f6;color:#6b7280;font-size:.78rem;font-weight:600;padding:.25rem .75rem;border-radius:9999px;">${esc(c.category.name)}</span>` : '');
+            `<span style="background:${s.bg};color:${s.color};border:1px solid ${s.color}22;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:9999px;">${s.icon} ${s.label}</span>` +
+            `<span style="background:${sev.bg};color:${sev.color};font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:9999px;">${sev.icon??''} ${sev.label??c.severity}</span>` +
+            (c.category ? `<span style="background:#f3f4f6;color:#6b7280;font-size:.75rem;font-weight:600;padding:.25rem .75rem;border-radius:9999px;">${esc(c.category.icon??'')} ${esc(c.category.name)}</span>` : '') +
+            (c.is_anonymous ? `<span style="background:#fef3c7;color:#92400e;font-size:.75rem;font-weight:600;padding:.25rem .75rem;border-radius:9999px;">👤 Anonymous</span>` : '');
 
-        // Photos
-        const before = (c.media??[]).filter(m => m.stage==='before');
-        const after  = (c.media??[]).filter(m => m.stage==='after');
-        document.getElementById('so-before').innerHTML = before.length
-            ? before.map(m => `<a href="${esc(m.cloud_url)}" target="_blank" style="display:block;aspect-ratio:1;border-radius:.625rem;overflow:hidden;background:#f3f4f6;"><img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;"></a>`).join('')
-            : '<p style="color:#9ca3af;font-size:.78rem;">No photos.</p>';
-        document.getElementById('so-after').innerHTML = after.length
-            ? after.map(m => m.file_type==='video'
-                ? `<video src="${esc(m.cloud_url)}" controls style="width:100%;aspect-ratio:1;border-radius:.625rem;background:#000;object-fit:cover;"></video>`
-                : `<a href="${esc(m.cloud_url)}" target="_blank" style="display:block;aspect-ratio:1;border-radius:.625rem;overflow:hidden;background:#f3f4f6;"><img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;"></a>`
-            ).join('')
-            : '<p style="color:#9ca3af;font-size:.78rem;">Engineer has not uploaded evidence yet.</p>';
+        // ── Stats strip ──────────────────────────────────────────────────────
+        const filed = new Date(c.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+        const updated = new Date(c.updated_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+        document.getElementById('so-stats').innerHTML = [
+            {icon:'👁️', value:c.views_count??0, label:'Views',   color:'#4f46e5'},
+            {icon:'👍', value:c.votes_count??0, label:'Votes',   color:'#0284c7'},
+            {icon:'📅', value:filed,            label:'Filed',   color:'#16a34a'},
+            {icon:'🔄', value:updated,          label:'Updated', color:'#d97706'},
+        ].map(st=>`
+            <div class="so-stat-card">
+                <div style="font-size:1.25rem;margin-bottom:.25rem;">${st.icon}</div>
+                <div style="font-size:1rem;font-weight:800;color:${st.color};line-height:1.1;">${st.value}</div>
+                <div style="font-size:.65rem;font-weight:600;color:#9ca3af;margin-top:.125rem;text-transform:uppercase;">${st.label}</div>
+            </div>`).join('');
 
-        // Description
+        // ── Media ────────────────────────────────────────────────────────────
+        const before = (c.media??[]).filter(m=>m.stage==='before');
+        const after  = (c.media??[]).filter(m=>m.stage==='after');
+
+        const renderMedia = items => items.length ? items.map(m => m.file_type==='video'
+            ? `<div class="so-media-thumb" title="${esc(m.original_name??'')}">
+                   <video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;" muted playsinline
+                          onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>
+                   <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                       <span style="background:rgba(0,0,0,.55);color:#fff;border-radius:9999px;padding:.2rem .5rem;font-size:.65rem;font-weight:700;">▶ VIDEO</span>
+                   </div>
+               </div>`
+            : `<a href="${esc(m.cloud_url)}" target="_blank" class="so-media-thumb" title="${esc(m.original_name??'')}">
+                   <img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
+               </a>`
+        ).map(h=>`<div style="position:relative;">${h}</div>`).join('')
+        : `<div style="aspect-ratio:1;border-radius:.625rem;background:#f9fafb;border:1.5px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.25rem;">
+               <span style="font-size:1.5rem;opacity:.4;">📷</span>
+               <span style="font-size:.65rem;color:#9ca3af;">No media</span>
+           </div>`;
+
+        document.getElementById('so-before').innerHTML = renderMedia(before);
+        document.getElementById('so-after').innerHTML  = renderMedia(after) === renderMedia([])
+            ? `<div style="aspect-ratio:1;border-radius:.625rem;background:#f0fdf4;border:1.5px dashed #86efac;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.25rem;">
+                   <span style="font-size:1.5rem;opacity:.5;">🔧</span>
+                   <span style="font-size:.65rem;color:#16a34a;">Awaiting fix</span>
+               </div>`
+            : renderMedia(after);
+
+        // ── Description ──────────────────────────────────────────────────────
         document.getElementById('so-description').textContent = c.description ?? '—';
 
-        // Meta
+        // ── Meta rows ────────────────────────────────────────────────────────
         document.getElementById('so-meta').innerHTML = [
-            {label:'Location',   value:c.location??'—'},
-            {label:'Reported By', value:c.submitted_by??'Anonymous'},
-            {label:'Engineer',   value:c.assigned_engineer?.name??'Unassigned'},
-        ].map(m => `<div>
-            <p style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">${m.label}</p>
-            <p style="font-size:.8125rem;font-weight:600;color:#374151;">${esc(m.value)}</p>
-        </div>`).join('');
+            ['📍 Location',    c.location??'—'],
+            ['👤 Reported By', c.submitted_by??(c.is_anonymous?'Anonymous':'—')],
+            ['👷 Engineer',    c.assigned_engineer?.name??'Unassigned'],
+            ['📂 Category',    c.category?.name??'—'],
+            ['🔢 Complaint #', c.complaint_number],
+            ...(c.resolved_at ? [['✅ Resolved', new Date(c.resolved_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})]] : []),
+        ].map(([k,v])=>`
+            <div class="so-meta-row">
+                <span style="color:#9ca3af;font-size:.75rem;font-weight:500;">${k}</span>
+                <span style="color:#111827;font-size:.8125rem;font-weight:600;text-align:right;max-width:55%;word-break:break-word;">${esc(String(v))}</span>
+            </div>`).join('');
 
-        // Timeline
+        // ── Leaflet mini-map ─────────────────────────────────────────────────
+        if (c.latitude && c.longitude) {
+            setTimeout(() => {
+                if (soMap) { soMap.remove(); soMap = null; }
+                soMap = L.map('so-map', {zoomControl:false, dragging:false, scrollWheelZoom:false})
+                          .setView([c.latitude, c.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {attribution:'© OpenStreetMap'}).addTo(soMap);
+                L.marker([c.latitude, c.longitude]).addTo(soMap)
+                 .bindPopup(`<strong>${esc(c.title)}</strong><br>${esc(c.location)}`).openPopup();
+            }, 50);
+        } else {
+            document.getElementById('so-map').innerHTML =
+                '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.8rem;">No location data</div>';
+        }
+
+        // ── Status Timeline ───────────────────────────────────────────────────
         const timeline = c.status_histories ?? [];
         document.getElementById('so-timeline').innerHTML = timeline.length
             ? timeline.map((h, i) => {
                 const ns = STATUS_CFG[h.new_status]??{label:h.new_status,color:'#374151',bg:'#f3f4f6',icon:'📌'};
-                return `<div class="so-timeline-step">
-                    <div style="width:22px;height:22px;border-radius:50%;background:${ns.bg};color:${ns.color};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;">${ns.icon}</div>
-                    <div style="flex:1;min-width:0;">
-                        <span style="background:${ns.bg};color:${ns.color};font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:9999px;">${ns.label}</span>
-                        ${h.remarks ? `<p style="font-size:.78rem;color:#6b7280;margin:.2rem 0;">"${esc(h.remarks)}"</p>` : ''}
-                        <p style="font-size:.72rem;color:#9ca3af;">${new Date(h.created_at).toLocaleString('en-IN')}${h.changed_by?' · '+esc(h.changed_by.name):''}</p>
+                const transitionLabel = h.old_status
+                    ? `${h.old_status.replace(/_/g,' ')} → ${h.new_status.replace(/_/g,' ')}`
+                    : 'Complaint Filed';
+                return `<div class="so-timeline-step" style="animation-delay:${i*0.05}s;">
+                    <div style="width:24px;height:24px;border-radius:50%;background:${ns.bg};color:${ns.color};
+                                display:flex;align-items:center;justify-content:center;font-size:.75rem;
+                                font-weight:700;flex-shrink:0;border:2px solid ${ns.color}33;">${ns.icon}</div>
+                    <div style="flex:1;min-width:0;padding-top:.1rem;">
+                        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                            <span style="background:${ns.bg};color:${ns.color};font-size:.7rem;font-weight:700;
+                                         padding:.2rem .625rem;border-radius:9999px;text-transform:capitalize;">${transitionLabel}</span>
+                        </div>
+                        ${h.remarks ? `<p style="font-size:.78rem;color:#6b7280;margin:.25rem 0 0;font-style:italic;">"${esc(h.remarks)}"</p>` : ''}
+                        <p style="font-size:.7rem;color:#9ca3af;margin:.2rem 0 0;">
+                            ${new Date(h.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                            ${h.changed_by ? ` · <strong>${esc(h.changed_by.name)}</strong>` : ''}
+                        </p>
                     </div>
                 </div>`;
             }).join('')
-            : '<p style="color:#9ca3af;font-size:.875rem;">No history yet.</p>';
+            : `<div style="display:flex;align-items:center;gap:.75rem;color:#9ca3af;font-size:.875rem;padding:.5rem 0;">
+                   <span style="font-size:1.5rem;">📭</span> No history yet.
+               </div>`;
 
-        // Status dropdown in footer — all statuses available to admin
-        const sel = document.getElementById('so-new-status');
-        sel.innerHTML = '<option value="">— Select new status —</option>' +
-            optRes.statuses.map(st => `<option value="${st.value}">${st.icon} ${st.label}</option>`).join('');
+        // ── Footer status dropdown ────────────────────────────────────────────
+        document.getElementById('so-new-status').innerHTML =
+            '<option value="">— Select new status —</option>' +
+            optRes.statuses.map(st=>`<option value="${st.value}">${st.icon} ${st.label}</option>`).join('');
         document.getElementById('so-remarks').value = '';
         document.getElementById('so-update-error').style.display = 'none';
 
@@ -455,9 +540,14 @@ async function openDetail(id) {
 
     } catch(e) {
         document.getElementById('so-loading').innerHTML =
-            '<p style="color:#dc2626;">Failed to load. <button onclick="openDetail(detailComplaintId)" style="color:#4f46e5;background:none;border:none;cursor:pointer;font-weight:600;">Retry</button></p>';
+            `<div style="text-align:center;color:#dc2626;padding:2rem;">
+                <div style="font-size:2rem;margin-bottom:.5rem;">⚠️</div>
+                <p style="margin:0 0 1rem;">Failed to load complaint.</p>
+                <button onclick="openDetail(detailComplaintId)" style="background:#4f46e5;color:#fff;border:none;border-radius:.625rem;padding:.5rem 1.25rem;font-size:.875rem;cursor:pointer;">Retry</button>
+             </div>`;
     }
 }
+
 
 function closeDetail() {
     const panel = document.getElementById('slideover-panel');

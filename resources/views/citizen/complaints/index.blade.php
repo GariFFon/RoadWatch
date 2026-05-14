@@ -4,6 +4,22 @@
 
 @section('content')
 
+{{-- ── Success Snackbar ── --}}
+<div id="snackbar"
+     style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);
+            background:#111827;color:#fff;padding:.75rem 1.375rem;border-radius:9999px;
+            font-size:.875rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22);
+            z-index:9999;display:none;align-items:center;gap:.625rem;
+            transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;
+            opacity:0;pointer-events:none;white-space:nowrap;">
+    <span style="font-size:1.1rem;">✅</span>
+    Complaint filed successfully!
+    <button onclick="dismissSnackbar()"
+            style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:9999px;
+                   width:20px;height:20px;font-size:.75rem;cursor:pointer;display:flex;
+                   align-items:center;justify-content:center;margin-left:.25rem;">✕</button>
+</div>
+
 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;color:#111827;margin:0;">My Complaints</h1>
@@ -287,6 +303,44 @@ function renderModal(c){
                 </div>
             </div>
         </div>
+
+        {{-- Status Timeline --}}
+        <div style="margin-top:1.25rem;background:#fff;border:1px solid #e5e7eb;border-radius:.875rem;padding:1rem;">
+            <h3 style="font-size:.875rem;font-weight:700;color:#111827;margin:0 0 1rem;">🕐 Status History</h3>
+            ${(()=>{
+                const histories = c.status_histories ?? [];
+                if(!histories.length) return `
+                    <div style="display:flex;align-items:center;gap:.75rem;color:#9ca3af;padding:.25rem 0;">
+                        <span style="font-size:1.25rem;">📭</span>
+                        <span style="font-size:.875rem;">No history yet.</span>
+                    </div>`;
+                return `<div style="position:relative;">
+                    <div style="position:absolute;left:11px;top:12px;bottom:12px;width:2px;background:linear-gradient(to bottom,#e5e7eb 0%,transparent 100%);"></div>
+                    ${histories.map((h,i)=>{
+                        const ns = STATUS_CONFIG[h.new_status] || {label:h.new_status,color:'#374151',bg:'#f3f4f6',border:'#d1d5db'};
+                        const label = h.old_status
+                            ? h.old_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) + ' → ' + h.new_status.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
+                            : '📋 Complaint Filed';
+                        const dateStr = new Date(h.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+                        return `<div style="display:flex;gap:.875rem;align-items:flex-start;padding-bottom:${i<histories.length-1?'1rem':'0'};position:relative;">
+                            <div style="width:24px;height:24px;border-radius:50%;background:${ns.bg};color:${ns.color};
+                                        display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;
+                                        flex-shrink:0;border:2px solid ${ns.color}33;z-index:1;">
+                                ${(ns.label??'')[0]??'•'}
+                            </div>
+                            <div style="flex:1;min-width:0;padding-top:.125rem;">
+                                <span style="background:${ns.bg};color:${ns.color};font-size:.7rem;font-weight:700;
+                                             padding:.2rem .625rem;border-radius:9999px;display:inline-block;margin-bottom:.25rem;">${label}</span>
+                                ${h.remarks?`<p style="font-size:.75rem;color:#6b7280;margin:.2rem 0;font-style:italic;">"${esc(h.remarks)}"</p>`:''}
+                                <p style="font-size:.7rem;color:#9ca3af;margin:0;">
+                                    🕐 ${dateStr}${h.changed_by?' · <strong style="color:#6b7280;">'+esc(h.changed_by.name)+'</strong>':''}
+                                </p>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            })()}
+        </div>
     </div>`;
 
     const content = document.getElementById('modal-content');
@@ -303,7 +357,38 @@ function esc(str){
 // Close modal on Escape key
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(null); });
 
-document.addEventListener('DOMContentLoaded',()=>loadComplaints(1));
+document.addEventListener('DOMContentLoaded',()=>{
+    loadComplaints(1);
+
+    // ── Show snackbar if redirected after filing ──
+    if (new URLSearchParams(window.location.search).get('filed') === '1') {
+        showSnackbar();
+        // Clean URL without reloading
+        history.replaceState({}, '', '/citizen/complaints');
+    }
+});
+
+function showSnackbar() {
+    const sb = document.getElementById('snackbar');
+    sb.style.display = 'flex';
+    // Trigger animation next frame
+    requestAnimationFrame(() => {
+        sb.style.opacity = '1';
+        sb.style.transform = 'translateX(-50%) translateY(0)';
+        sb.style.pointerEvents = 'auto';
+    });
+    // Auto-dismiss after 4 seconds
+    setTimeout(dismissSnackbar, 4000);
+}
+
+function dismissSnackbar() {
+    const sb = document.getElementById('snackbar');
+    sb.style.opacity = '0';
+    sb.style.transform = 'translateX(-50%) translateY(20px)';
+    sb.style.pointerEvents = 'none';
+    setTimeout(() => sb.style.display = 'none', 350);
+}
+
 </script>
 
 @endsection
