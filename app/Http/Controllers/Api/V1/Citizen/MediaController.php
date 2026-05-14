@@ -30,11 +30,12 @@ class MediaController extends Controller
         $stage   = $request->input('stage', 'before');
         $added   = [];
         $existing = $complaint->media()->count();
+        $disk    = config('filesystems.default');
 
         foreach ($request->file('files') as $index => $file) {
             $isVideo = in_array($file->getMimeType(), ['video/mp4', 'video/quicktime', 'video/webm']);
             $folder  = $isVideo ? 'videos' : 'images';
-            $path    = $file->store("complaints/{$complaint->id}/{$folder}", 'public');
+            $path    = $file->store("complaints/{$complaint->id}/{$folder}", $disk);
 
             $media = ComplaintMedia::create([
                 'complaint_id'  => $complaint->id,
@@ -44,9 +45,9 @@ class MediaController extends Controller
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type'     => $file->getMimeType(),
                 'size_bytes'    => $file->getSize(),
-                'cloud_disk'    => 'public',
+                'cloud_disk'    => $disk,
                 'cloud_path'    => $path,
-                'cloud_url'     => Storage::disk('public')->url($path),
+                'cloud_url'     => Storage::disk($disk)->url($path),
                 'sort_order'    => $existing + $index,
             ]);
 

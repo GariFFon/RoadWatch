@@ -53,6 +53,8 @@ class ComplaintController extends Controller
 
         $complaint = DB::transaction(function () use ($validated, $request) {
 
+            $disk = config('filesystems.default'); // 'public' locally, 's3' in production
+
             $complaint = Complaint::create([
                 'user_id'      => auth()->id(),
                 'category_id'  => $validated['category_id'],
@@ -67,7 +69,7 @@ class ComplaintController extends Controller
             ]);
 
             foreach ($request->file('images', []) as $index => $file) {
-                $path = $file->store("complaints/{$complaint->id}/images", 'public');
+                $path = $file->store("complaints/{$complaint->id}/images", $disk);
                 ComplaintMedia::create([
                     'complaint_id'  => $complaint->id,
                     'uploaded_by'   => auth()->id(),
@@ -76,15 +78,15 @@ class ComplaintController extends Controller
                     'original_name' => $file->getClientOriginalName(),
                     'mime_type'     => $file->getMimeType(),
                     'size_bytes'    => $file->getSize(),
-                    'cloud_disk'    => 'public',
+                    'cloud_disk'    => $disk,
                     'cloud_path'    => $path,
-                    'cloud_url'     => Storage::disk('public')->url($path),
+                    'cloud_url'     => Storage::disk($disk)->url($path),
                     'sort_order'    => $index,
                 ]);
             }
 
             foreach ($request->file('videos', []) as $index => $file) {
-                $path = $file->store("complaints/{$complaint->id}/videos", 'public');
+                $path = $file->store("complaints/{$complaint->id}/videos", $disk);
                 ComplaintMedia::create([
                     'complaint_id'  => $complaint->id,
                     'uploaded_by'   => auth()->id(),
@@ -93,9 +95,9 @@ class ComplaintController extends Controller
                     'original_name' => $file->getClientOriginalName(),
                     'mime_type'     => $file->getMimeType(),
                     'size_bytes'    => $file->getSize(),
-                    'cloud_disk'    => 'public',
+                    'cloud_disk'    => $disk,
                     'cloud_path'    => $path,
-                    'cloud_url'     => Storage::disk('public')->url($path),
+                    'cloud_url'     => Storage::disk($disk)->url($path),
                     'sort_order'    => $index,
                 ]);
             }
