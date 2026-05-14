@@ -424,7 +424,27 @@ async function loadDetail() {
                                     border-radius:.5rem;border:1px dashed #fde68a;text-align:center;font-size:.75rem;color:#92400e;">
                             ⏳ Admin hasn't rated your work yet.
                         </div>`;
-                }
+                 }
+            }
+
+            // 6. Show citizen's feedback
+            if (c.feedback) {
+                const fb = c.feedback;
+                const fbStars = '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating);
+                const fbEl = document.createElement('div');
+                fbEl.innerHTML = `
+                    <div style="margin-top:1rem;padding:.875rem;background:#fff;border-radius:.75rem;
+                                border:1.5px solid #c7d2fe;text-align:left;">
+                        <p style="font-size:.72rem;font-weight:700;color:#3730a3;margin:0 0 .375rem;">
+                            💬 Citizen's Feedback
+                        </p>
+                        <div style="font-size:1.5rem;color:#6366f1;letter-spacing:.08em;margin-bottom:.2rem;">${fbStars}</div>
+                        <div style="font-size:.875rem;font-weight:700;color:#374151;">${esc(fb.emoji)} ${esc(fb.label)} (${fb.rating}/5)</div>
+                        ${fb.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.25rem;">"${esc(fb.comment)}"</div>` : ''}
+                    </div>`;
+                // Insert after the admin rating card inside the verified green card
+                const greenCard = rightCol.firstChild.querySelector('div');
+                if (greenCard) greenCard.appendChild(fbEl.firstElementChild);
             }
         }
         // ────────────────────────────────────────────────────────────────────
