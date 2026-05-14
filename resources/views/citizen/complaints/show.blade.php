@@ -63,45 +63,45 @@
 <style>
 .rw-card { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1.375rem; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
 .rw-section-title { font-size:0.9375rem; font-weight:700; color:#111827; margin:0; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-@media(max-width:768px) { #detail-grid { grid-template-columns:1fr !important; } }
+@@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@@media(max-width:768px) { #detail-grid { grid-template-columns:1fr !important; } }
 .star-btn { font-size:1.75rem; cursor:pointer; transition:transform 0.1s; display:inline-block; }
 .star-btn:hover { transform:scale(1.2); }
 </style>
 
 {{-- JS --}}
 <script>
-const COMPLAINT_ID = {{ $complaintId }};
+window.COMPLAINT_ID = {{ $complaintId }};
 
-const STATUS_CONFIG = {
+window.STATUS_CONFIG = {
     pending:      { label:'⏳ Pending',       color:'#92400e', bg:'#fffbeb', border:'#fcd34d' },
     under_review: { label:'🔍 Under Review',  color:'#1e40af', bg:'#eff6ff', border:'#93c5fd' },
     in_progress:  { label:'🔧 In Progress',   color:'#1d4ed8', bg:'#dbeafe', border:'#60a5fa' },
     resolved:     { label:'✅ Resolved',      color:'#14532d', bg:'#f0fdf4', border:'#86efac' },
     rejected:     { label:'❌ Rejected',      color:'#7f1d1d', bg:'#fef2f2', border:'#fca5a5' },
 };
-const SEV_CONFIG = {
+window.SEV_CONFIG = {
     low:       { label:'🟢 Low',       color:'#065f46', bg:'#d1fae5' },
     medium:    { label:'🟡 Medium',    color:'#713f12', bg:'#fef9c3' },
     high:      { label:'🟠 High',      color:'#7c2d12', bg:'#ffedd5' },
     emergency: { label:'🔴 Emergency', color:'#7f1d1d', bg:'#fee2e2' },
 };
-const PIPELINE = [
+window.PIPELINE = [
     { key:'pending',      label:'Submitted',    icon:'📋' },
     { key:'under_review', label:'Under Review', icon:'🔍' },
     { key:'in_progress',  label:'In Progress',  icon:'🔧' },
     { key:'resolved',     label:'Resolved',     icon:'✅' },
 ];
 
-let leafletMap = null;
+window.leafletMap = null;
 
-async function loadComplaint() {
+window.loadComplaint = async function() {
     document.getElementById('loading-state').style.display = 'flex';
     document.getElementById('error-state').style.display   = 'none';
     document.getElementById('complaint-content').style.display = 'none';
 
     try {
-        const res = await axios.get(`/api/v1/citizen/complaints/${COMPLAINT_ID}`);
+        const res = await axios.get(`/api/v1/citizen/complaints/${window.COMPLAINT_ID}`);
         const c   = res.data.data;
         renderAll(c);
         document.getElementById('loading-state').style.display  = 'none';
@@ -114,12 +114,12 @@ async function loadComplaint() {
             err.response?.status === 404 ? 'Complaint not found.' :
             'Failed to load. Please try again.';
     }
-}
+};
 
 function renderAll(c) {
     document.title = c.title + ' — RoadWatch';
-    const s   = STATUS_CONFIG[c.status] ?? { label:c.status, color:'#374151', bg:'#f3f4f6', border:'#d1d5db' };
-    const sev = SEV_CONFIG[c.severity]  ?? { label:c.severity, color:'#374151', bg:'#f3f4f6' };
+    const s   = window.STATUS_CONFIG[c.status] ?? { label:c.status, color:'#374151', bg:'#f3f4f6', border:'#d1d5db' };
+    const sev = window.SEV_CONFIG[c.severity]  ?? { label:c.severity, color:'#374151', bg:'#f3f4f6' };
 
     // ── Header card ─────────────────────────────────────────────────────────
     document.getElementById('card-header').innerHTML = `
@@ -143,8 +143,8 @@ function renderAll(c) {
         </div>`;
 
     // ── Progress pipeline ────────────────────────────────────────────────────
-    const isRejected   = c.status === 'rejected';
-    const currentStep  = PIPELINE.findIndex(p => p.key === c.status);
+    const isRejected  = c.status === 'rejected';
+    const currentStep = window.PIPELINE.findIndex(p => p.key === c.status);
 
     if (isRejected) {
         document.getElementById('card-pipeline').innerHTML = `
@@ -153,12 +153,12 @@ function renderAll(c) {
                 <p style="font-size:0.875rem; color:#991b1b; margin:0;">Please contact support if you have questions.</p>
             </div>`;
     } else {
-        const stepsHtml = PIPELINE.map((step, idx) => {
+        const stepsHtml = window.PIPELINE.map((step, idx) => {
             const done   = currentStep >= idx;
             const circle = done
                 ? `<div style="width:48px;height:48px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;background:#4f46e5;box-shadow:0 0 0 4px #c7d2fe;">${step.icon}</div>`
                 : `<div style="width:48px;height:48px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;background:#f3f4f6;border:2px solid #e5e7eb;">○</div>`;
-            const connector = idx < PIPELINE.length - 1
+            const connector = idx < window.PIPELINE.length - 1
                 ? `<div style="flex:1;height:3px;background:${currentStep > idx ? '#4f46e5' : '#e5e7eb'};border-radius:9999px;margin-bottom:1.5rem;"></div>`
                 : '';
             return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;">${circle}<p style="font-size:0.7rem;font-weight:${done?'700':'500'};color:${done?'#4f46e5':'#9ca3af'};margin:0.5rem 0 0;text-align:center;">${step.label}</p></div>${connector}`;
@@ -179,17 +179,17 @@ function renderAll(c) {
     }
 
     // ── Leaflet mini-map ─────────────────────────────────────────────────────
-    if (!leafletMap) {
+    if (!window.leafletMap) {
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({
             iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
             iconUrl:       'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
             shadowUrl:     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
-        leafletMap = L.map('detail-map', { zoomControl:true, dragging:false, scrollWheelZoom:false })
+        window.leafletMap = L.map('detail-map', { zoomControl:true, dragging:false, scrollWheelZoom:false })
                       .setView([c.latitude, c.longitude], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(leafletMap);
-        L.marker([c.latitude, c.longitude]).addTo(leafletMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(window.leafletMap);
+        L.marker([c.latitude, c.longitude]).addTo(window.leafletMap)
          .bindPopup(`<strong>${escHtml(c.title)}</strong><br>${escHtml(c.location)}`).openPopup();
     }
 
@@ -223,8 +223,8 @@ function renderAll(c) {
             <div style="position:absolute;left:15px;top:8px;bottom:8px;width:2px;background:#e5e7eb;"></div>
             <div style="display:flex;flex-direction:column;gap:1.25rem;">
                 ${histories.map(h => {
-                    const hs = STATUS_CONFIG[h.new_status] ?? { border:'#e5e7eb' };
-                    const firstChar = (STATUS_CONFIG[h.new_status]?.label ?? '•')[0];
+                    const hs = window.STATUS_CONFIG[h.new_status] ?? { border:'#e5e7eb' };
+                    const firstChar = (window.STATUS_CONFIG[h.new_status]?.label ?? '•')[0];
                     return `<div style="display:flex;gap:1rem;align-items:flex-start;position:relative;">
                         <div style="width:32px;height:32px;border-radius:9999px;background:#fff;border:3px solid ${hs.border};flex-shrink:0;z-index:1;display:flex;align-items:center;justify-content:center;font-size:0.875rem;">${firstChar}</div>
                         <div style="flex:1;min-width:0;padding-top:0.125rem;">
@@ -260,7 +260,6 @@ function renderAll(c) {
                     </div>
                 </div>`;
         } else {
-            let selectedRating = 0;
             feedbackHtml = `
                 <div class="rw-card" style="border:1px solid #86efac;background:#f0fdf4;" id="feedback-card">
                     <h2 class="rw-section-title" style="color:#15803d;">⭐ Rate the Resolution</h2>
@@ -286,25 +285,25 @@ function renderAll(c) {
 }
 
 // ── Star rating interactions ────────────────────────────────────────────────
-let selectedRating = 0;
+window.selectedRating = 0;
 window.handleStarClick = function(n) {
-    selectedRating = n;
+    window.selectedRating = n;
     document.querySelectorAll('.star-btn').forEach((s,i) => s.textContent = i < n ? '⭐' : '☆');
 };
 
 // ── Submit feedback via API ─────────────────────────────────────────────────
 window.submitFeedback = async function() {
-    if (!selectedRating) {
+    if (!window.selectedRating) {
         document.getElementById('feedback-error').style.display = 'block'; return;
     }
     const btn = document.getElementById('feedback-btn');
     btn.disabled = true; btn.textContent = '⏳ Submitting...';
     try {
-        await axios.post(`/api/v1/citizen/complaints/${COMPLAINT_ID}/feedback`, {
-            rating:  selectedRating,
+        await axios.post(`/api/v1/citizen/complaints/${window.COMPLAINT_ID}/feedback`, {
+            rating:  window.selectedRating,
             comment: document.getElementById('feedback-comment').value || null,
         });
-        loadComplaint(); // Reload to show the submitted feedback
+        window.loadComplaint();
     } catch (err) {
         btn.disabled = false; btn.textContent = 'Submit Feedback';
         alert(err.response?.data?.message ?? 'Failed to submit feedback.');
@@ -327,7 +326,7 @@ function capWords(str) {
     return str.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-document.addEventListener('DOMContentLoaded', loadComplaint);
+document.addEventListener('DOMContentLoaded', () => window.loadComplaint());
 </script>
 
 @endsection

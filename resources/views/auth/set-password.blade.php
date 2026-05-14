@@ -9,18 +9,18 @@
             >
         @endif
 
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 class="text-xl font-bold text-gray-800">
             One last step, {{ auth()->user()->name }}!
         </h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p class="mt-1 text-sm text-gray-500">
             Set a password so you can also log in with your email.
         </p>
     </div>
 
     {{-- Flash messages --}}
     @if(session('info'))
-        <div class="mb-4 rounded-md bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 text-sm text-blue-700 dark:text-blue-300">
-            {{ session('info') }}
+        <div class="mb-4 rounded-lg bg-indigo-600 p-3 text-sm font-medium text-white shadow-sm">
+            ℹ️ {{ session('info') }}
         </div>
     @endif
 
@@ -28,8 +28,8 @@
         @csrf
 
         {{-- Email (read-only, for context) --}}
-        <div class="mb-4 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-            Signing in as <span class="font-semibold">{{ auth()->user()->email }}</span>
+        <div class="mb-4 rounded-lg bg-gray-800 px-4 py-3 text-sm text-white shadow-sm">
+            Signing in as <span class="font-semibold text-indigo-300">{{ auth()->user()->email }}</span>
         </div>
 
         {{-- New Password --}}
@@ -64,7 +64,7 @@
         </div>
 
         {{-- Why this matters --}}
-        <div class="mt-4 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 text-xs text-amber-700 dark:text-amber-300">
+        <div class="mt-4 rounded-lg bg-amber-500 p-3 text-xs font-medium text-white shadow-sm">
             🔒 Setting a password lets you log in with email too, and keeps your account secure if you ever lose access to Google.
         </div>
 
@@ -72,7 +72,7 @@
         <div class="mt-6 flex items-center justify-between">
             <form method="POST" action="{{ route('logout') }}" class="inline">
                 @csrf
-                <button type="submit" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline">
+                <button type="submit" class="text-sm text-gray-500 hover:text-gray-700 underline">
                     Not you? Sign out
                 </button>
             </form>

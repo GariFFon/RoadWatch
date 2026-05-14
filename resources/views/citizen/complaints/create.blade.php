@@ -36,23 +36,13 @@
             <input type="hidden" id="category_id" name="category_id">
             <p id="category-error" style="display:none; color:#dc2626; font-size:0.813rem;">⚠ Please select a category</p>
 
-            {{-- Severity --}}
+            {{-- Severity — populated by /api/v1/complaint-options --}}
             <label style="display:block; font-size:0.875rem; font-weight:600; color:#374151; margin-bottom:0.5rem;">Severity Level</label>
-            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem;">
-                @foreach(['low'=>['Low','🟢','#d1fae5','#065f46'],'medium'=>['Medium','🟡','#fef9c3','#713f12'],'high'=>['High','🟠','#ffedd5','#7c2d12'],'emergency'=>['Emergency','🔴','#fee2e2','#7f1d1d']] as $val=>[$label,$emoji,$bg,$color])
-                <label style="cursor:pointer;">
-                    <input type="radio" name="severity" value="{{ $val }}" style="display:none;" class="sev-radio"
-                           {{ $val === 'medium' ? 'checked' : '' }}>
-                    <div class="sev-card {{ $val === 'medium' ? 'sev-selected' : '' }}"
-                         data-bg="{{ $bg }}" data-color="{{ $color }}"
-                         onclick="selectSeverity(this)"
-                         style="{{ $val === 'medium' ? "background:{$bg}; border-color:{$color}; color:{$color};" : '' }}">
-                        <div style="font-size:1.25rem;">{{ $emoji }}</div>
-                        <div style="font-size:0.75rem; font-weight:600; margin-top:2px;">{{ $label }}</div>
-                    </div>
-                </label>
-                @endforeach
+            <div id="severity-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem;">
+                <div style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:.5rem;font-size:.85rem;">Loading…</div>
             </div>
+            <input type="hidden" id="severity_value" name="severity" value="medium">
+            <p id="severity-error" style="display:none; color:#dc2626; font-size:0.813rem;">⚠ Please select a severity level</p>
         </div>
 
         {{-- STEP 2 — Describe --}}
@@ -199,7 +189,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── 1. Load categories from API ─────────────────────────────────────────
+    // ── 1. Load categories & severity from API ──────────────────────────────
     axios.get('/api/v1/categories').then(res => {
         const grid = document.getElementById('categories-grid');
         grid.innerHTML = res.data.data.map(cat => `
@@ -216,6 +206,41 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('categories-grid').innerHTML =
             '<div style="color:#dc2626; font-size:0.875rem; grid-column:1/-1;">Failed to load categories.</div>';
     });
+
+    // Severity from complaint-options API
+    const SEV_STYLE = {
+        low:       { bg: '#d1fae5', color: '#065f46' },
+        medium:    { bg: '#fef9c3', color: '#713f12' },
+        high:      { bg: '#ffedd5', color: '#7c2d12' },
+        emergency: { bg: '#fee2e2', color: '#7f1d1d' },
+    };
+    fetch('/api/v1/complaint-options')
+        .then(r => r.json())
+        .then(data => {
+            const sevGrid = document.getElementById('severity-grid');
+            const defaultSev = 'medium';
+            sevGrid.innerHTML = data.severities.map(sev => {
+                const st   = SEV_STYLE[sev.value] ?? { bg: '#f3f4f6', color: '#374151' };
+                const isDefault = sev.value === defaultSev;
+                return `<label style="cursor:pointer;">
+                    <input type="radio" name="severity" value="${sev.value}" style="display:none;"
+                           class="sev-radio" ${isDefault ? 'checked' : ''}>
+                    <div class="sev-card ${isDefault ? 'sev-selected' : ''}"
+                         data-bg="${st.bg}" data-color="${st.color}"
+                         onclick="selectSeverity(this)"
+                         style="${isDefault ? `background:${st.bg};border-color:${st.color};color:${st.color};` : ''}">
+                        <div style="font-size:1.25rem;">${sev.icon}</div>
+                        <div style="font-size:0.75rem;font-weight:600;margin-top:2px;">${sev.label}</div>
+                    </div>
+                </label>`;
+            }).join('');
+            // Sync hidden input on init
+            document.getElementById('severity_value').value = defaultSev;
+        })
+        .catch(() => {
+            document.getElementById('severity-grid').innerHTML =
+                '<div style="color:#dc2626;font-size:.875rem;grid-column:1/-1;">Failed to load severity options.</div>';
+        });
 
     // ── 2. Leaflet map ──────────────────────────────────────────────────────
     const map = L.map('map').setView([20.5937, 78.9629], 5);
@@ -265,11 +290,17 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     window.selectSeverity = function (el) {
         document.querySelectorAll('.sev-card').forEach(c => {
-            c.classList.remove('sev-selected'); c.style.background='#fff'; c.style.borderColor='#e5e7eb'; c.style.color='#374151';
+            c.classList.remove('sev-selected');
+            c.style.background = '#fff'; c.style.borderColor = '#e5e7eb'; c.style.color = '#374151';
         });
         el.classList.add('sev-selected');
-        el.style.background = el.dataset.bg; el.style.borderColor = el.dataset.color; el.style.color = el.dataset.color;
-        el.closest('label').querySelector('.sev-radio').checked = true;
+        el.style.background    = el.dataset.bg;
+        el.style.borderColor   = el.dataset.color;
+        el.style.color         = el.dataset.color;
+        const radio = el.closest('label').querySelector('.sev-radio');
+        radio.checked = true;
+        // Sync hidden input
+        document.getElementById('severity_value').value = radio.value;
     };
 
     // ── 5. Image / video previews ────────────────────────────────────────────

@@ -32,10 +32,10 @@ class ComplaintController extends Controller
         return redirect()->route('citizen.complaints.index');
     }
 
-    /** GET /citizen/complaints/{id} */
-    public function show(string $id): View
+    /** GET /citizen/complaints/{complaint} */
+    public function show(string $complaint): View
     {
         // Pass only the ID to the view — actual complaint data fetched from API.
-        return view('citizen.complaints.show', ['complaintId' => $id]);
+        return view('citizen.complaints.show', ['complaintId' => $complaint]);
     }
 }

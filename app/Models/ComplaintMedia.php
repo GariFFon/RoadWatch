@@ -11,6 +11,12 @@ class ComplaintMedia extends Model
 {
     use HasFactory;
 
+    /**
+     * The migration only defines created_at (no updated_at column).
+     * Setting this to null tells Eloquent never to write updated_at.
+     */
+    const UPDATED_AT = null;
+
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------

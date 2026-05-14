@@ -28,7 +28,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect to the correct panel based on the user's role
         $role = $request->user()->role;
 
         $destination = match ($role) {
@@ -38,7 +37,13 @@ class AuthenticatedSessionController extends Controller
             default    => route('home'),
         };
 
-        return redirect()->intended($destination);
+        // Use intended() only when the stored URL is a safe web page (not an API endpoint).
+        $intended = session()->pull('url.intended');
+        if ($intended && !str_contains($intended, '/api/')) {
+            return redirect($intended);
+        }
+
+        return redirect($destination);
     }
 
     /**

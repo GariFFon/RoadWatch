@@ -10,6 +10,9 @@ class Feedback extends Model
 {
     use HasFactory;
 
+    /** Laravel pluralizes 'Feedback' → 'feedback', but the table is 'feedbacks'. */
+    protected $table = 'feedbacks';
+
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------

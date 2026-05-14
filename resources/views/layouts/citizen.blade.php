@@ -128,7 +128,7 @@
                             background:#fff;border:1.5px solid #f1f1f1;border-radius:1rem;
                             box-shadow:0 16px 48px rgba(0,0,0,.12);z-index:500;overflow:hidden;
                             animation:dropIn .15s ease;">
-                    @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+                    @@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 
                     {{-- Header --}}
                     <div style="padding:1rem 1rem .875rem;border-bottom:1px solid #f3f4f6;display:flex;gap:.75rem;align-items:center;">
