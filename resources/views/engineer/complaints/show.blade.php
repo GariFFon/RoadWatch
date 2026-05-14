@@ -205,9 +205,9 @@ const SEV_CFG = {
 };
 // Engineer-visible transitions only — backend is the source of truth via next_statuses
 const TRANSITIONS = {
-    pending:               [],
-    under_review:          [],
-    in_progress:           ['awaiting_verification'],
+    pending:               ['under_review'],          // engineer starts review
+    under_review:          ['in_progress'],           // engineer begins work
+    in_progress:           ['awaiting_verification'], // engineer submits work
     awaiting_verification: [],  // engineer waits for admin to verify
     verified:              [],
     rejected:              [],
@@ -490,8 +490,8 @@ function renderUpdateForm(currentStatus, nextStatuses) {
             <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:.875rem;">🔄 Update Status</h2>
             <div style="text-align:center;padding:1.5rem 1rem;background:${bg};border-radius:.875rem;">
                 <div style="font-size:2rem;margin-bottom:.5rem;">${icon}</div>
-                <p style="font-size:.875rem;font-weight:700;color:${color};margin:0;">${msg}</p>
-                <p style="font-size:.78rem;color:#9ca3af;margin:.375rem 0 0;">${sub}</p>
+                ${msg ? `<p style="font-size:.875rem;font-weight:700;color:${color};margin:0;">${msg}</p>` : ''}
+                ${sub ? `<p style="font-size:.78rem;color:#9ca3af;margin:.375rem 0 0;">${sub}</p>` : ''}
             </div>`;
         return;
     }
