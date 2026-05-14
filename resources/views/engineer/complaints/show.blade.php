@@ -96,7 +96,17 @@
             {{-- Upload Work Evidence --}}
             <div class="eng-card" style="padding:1.5rem;" id="upload-card">
                 <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:.25rem;">📤 Upload Work Evidence</h2>
-                <p style="font-size:.78rem;color:#9ca3af;margin-bottom:1rem;">Photos/videos after completing the work. Admin will review these before marking resolved.</p>
+                <p style="font-size:.78rem;color:#9ca3af;margin-bottom:.75rem;">Photos/videos after completing the work. Admin will review these before marking resolved.</p>
+
+                {{-- ⚠ Permanent upload warning --}}
+                <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:.625rem;
+                            padding:.5rem .75rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.5rem;">
+                    <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
+                    <p style="font-size:.75rem;color:#92400e;font-weight:600;margin:0;line-height:1.4;">
+                        Upload with care — files <strong>cannot be removed</strong> once uploaded.
+                        Make sure your evidence is clear and correct before submitting.
+                    </p>
+                </div>
 
                 {{-- Uploaded files strip (shown when files exist) --}}
                 <div id="uploaded-strip" style="display:none;">
@@ -249,7 +259,7 @@ async function loadDetail() {
             ? before.map(m => mediaThumb(m, false)).join('')
             : '<p style="color:#9ca3af;font-size:.875rem;">No photos submitted by citizen.</p>';
 
-        renderAfterMedia(after);
+        renderAfterMedia(after, false); // evidence is permanent — no deletion allowed
 
         // ── Citizen info ──
         document.getElementById('d-citizen-info').innerHTML = c.submitted_by
@@ -550,37 +560,26 @@ function renderAfterMedia(items, allowDelete = true) {
     empty.style.display = 'none';
     el.innerHTML = items.map(m => mediaThumb(m, allowDelete)).join('');
 
-    // ── Upload card: compact strip mode when files already exist ──
-    const strip     = document.getElementById('uploaded-strip');
-    const dropZone  = document.getElementById('drop-zone');
+    // ── Upload card: always show compact strip when files exist (no delete allowed) ──
+    const strip    = document.getElementById('uploaded-strip');
+    const dropZone = document.getElementById('drop-zone');
     if (!strip || !dropZone) return;
 
-    if (allowDelete) { // only when engineer can still modify (not read-only)
-        // Build mini thumbnail strip inside upload card
-        const stripGrid = document.getElementById('strip-grid');
-        stripGrid.innerHTML = items.map(m => {
-            const isVid = m.file_type === 'video';
-            return `<div style="aspect-ratio:1;border-radius:.625rem;overflow:hidden;background:#000;position:relative;"
-                         title="${esc(m.original_name ?? '')}">
-                ${isVid
-                    ? `<video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;"></video>
-                       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-                                   background:rgba(0,0,0,.35);pointer-events:none;">
-                           <span style="font-size:1.25rem;">▶</span></div>`
-                    : `<img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;">`}
-                <button onclick="deleteEvidence(${m.id},this)"
-                        style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);border:none;
-                               color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;
-                               font-size:.65rem;display:flex;align-items:center;justify-content:center;
-                               line-height:1;">✕</button>
-            </div>`;
-        }).join('');
-        strip.style.display    = 'block';
-        dropZone.style.display = 'none';   // hide big drop zone
-    } else {
-        strip.style.display    = 'none';
-        dropZone.style.display = 'none';   // verified — upload card hidden by parent
-    }
+    const stripGrid = document.getElementById('strip-grid');
+    stripGrid.innerHTML = items.map(m => {
+        const isVid = m.file_type === 'video';
+        return `<div style="aspect-ratio:1;border-radius:.625rem;overflow:hidden;background:#111;position:relative;"
+                     title="${esc(m.original_name ?? '')}">
+            ${isVid
+                ? `<video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;"></video>
+                   <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                               background:rgba(0,0,0,.35);pointer-events:none;">
+                       <span style="font-size:1.25rem;">▶</span></div>`
+                : `<img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;">`}
+        </div>`;
+    }).join('');
+    strip.style.display    = 'block';
+    dropZone.style.display = 'none';
 }
 
 // Toggle add-more drop zone visibility
