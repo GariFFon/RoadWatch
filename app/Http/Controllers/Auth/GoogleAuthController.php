@@ -45,6 +45,9 @@ class GoogleAuthController extends Controller
                 'last_login_at'     => now(),
             ]);
 
+            // ✅ Establish the session — this was the missing call
+            Auth::login($user, remember: true);
+
             // If they never set a password, send them to set-password screen
             if ($user->needsPasswordSetup()) {
                 return redirect()->route('password.setup');
