@@ -49,8 +49,8 @@ const STATUS_CFG = {
     under_review:          {label:'Under Review',          color:'#1e40af', bg:'#eff6ff', icon:'🔍'},
     in_progress:           {label:'In Progress',           color:'#0c4a6e', bg:'#e0f2fe', icon:'🔧'},
     awaiting_verification: {label:'Awaiting Verification', color:'#c2410c', bg:'#fff7ed', icon:'🕐'},
-    verified:              {label:'Verified ✓',            color:'#14532d', bg:'#f0fdf4', icon:'✅'},
     rejected:              {label:'Rejected',              color:'#7f1d1d', bg:'#fef2f2', icon:'❌'},
+    // 'verified' intentionally omitted — verified tasks live in Completed Tasks only
 };
 const SEV_CFG = {
     low:       {bg:'#d1fae5',color:'#065f46'},
@@ -73,14 +73,15 @@ function timeAgo(iso){
     return Math.floor(d/86400)+'d ago';
 }
 
-// Populate status filter from API
+// Populate status filter from API (exclude 'verified' — those live in Completed Tasks)
 async function loadFilters() {
     try {
         const res  = await fetch('/api/v1/complaint-options');
         const data = await res.json();
         const sel  = document.getElementById('f-status');
+        const opts = (data.statuses ?? []).filter(s => s.value !== 'verified');
         sel.innerHTML = '<option value="">All Statuses</option>' +
-            data.statuses.map(s => `<option value="${s.value}">${s.icon} ${s.label}</option>`).join('');
+            opts.map(s => `<option value="${s.value}">${s.icon} ${s.label}</option>`).join('');
         sel.disabled = false;
     } catch(_) {
         document.getElementById('f-status').innerHTML = '<option value="">All Statuses</option>';
@@ -142,7 +143,7 @@ async function loadComplaints() {
                 ${items.map(c => {
                     const s   = STATUS_CFG[c.status]  ?? {label:c.status, color:'#374151', bg:'#f3f4f6', icon:'📌'};
                     const sev = SEV_CFG[c.severity]   ?? {bg:'#f3f4f6', color:'#374151'};
-                    const isTerminal = c.status === 'awaiting_verification' || c.status === 'verified' || c.status === 'rejected';
+                    const isTerminal = c.status === 'awaiting_verification' || c.status === 'rejected';
                     return `
                     <div style="background:#fafafa;border:1.5px solid #f1f1f1;border-radius:1rem;padding:1.25rem;
                                 transition:all .2s;cursor:pointer;"
