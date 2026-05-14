@@ -26,6 +26,9 @@ class ComplaintResource extends JsonResource
             'created_at'       => $this->created_at->toIso8601String(),
             'updated_at'       => $this->updated_at->toIso8601String(),
 
+            // Valid status transitions from the current status (empty array = terminal state)
+            'next_statuses'    => \App\Models\Complaint::VALID_TRANSITIONS[$this->status] ?? [],
+
             // Related
             'category'         => $this->whenLoaded('category', fn() => [
                 'id'   => $this->category->id,
@@ -47,18 +50,21 @@ class ComplaintResource extends JsonResource
             ),
 
             'status_histories' => $this->whenLoaded('statusHistories', fn() =>
-                $this->statusHistories->sortByDesc('created_at')->map(fn($h) => [
-                    'id'           => $h->id,
-                    'old_status'   => $h->old_status,
-                    'new_status'   => $h->new_status,
-                    'remarks'      => $h->remarks,
-                    'changed_by'   => $h->changedBy ? [
-                        'id'   => $h->changedBy->id,
-                        'name' => $h->is_anonymous ? 'Anonymous' : $h->changedBy->name,
-                        'role' => $h->changedBy->role,
-                    ] : null,
-                    'created_at'   => $h->created_at->toIso8601String(),
-                ])
+                $this->statusHistories
+                    ->sortBy('created_at')       // oldest first → chronological order
+                    ->values()                   // re-index so JSON encodes as [] not {}
+                    ->map(fn($h) => [
+                        'id'           => $h->id,
+                        'old_status'   => $h->old_status,
+                        'new_status'   => $h->new_status,
+                        'remarks'      => $h->remarks,
+                        'changed_by'   => $h->changedBy ? [
+                            'id'   => $h->changedBy->id,
+                            'name' => $h->is_anonymous ? 'Anonymous' : $h->changedBy->name,
+                            'role' => $h->changedBy->role,
+                        ] : null,
+                        'created_at'   => $h->created_at->toIso8601String(),
+                    ])
             ),
 
             'feedback' => $this->whenLoaded('feedback', fn() => $this->feedback ? [
@@ -70,6 +76,15 @@ class ComplaintResource extends JsonResource
             'submitted_by' => $this->when(
                 !$this->is_anonymous && $this->relationLoaded('user'),
                 fn() => $this->user?->name
+            ),
+
+            // Assigned engineer (null if not yet assigned)
+            'assigned_engineer' => $this->whenLoaded('assignedEngineer', fn() =>
+                $this->assignedEngineer ? [
+                    'id'   => $this->assignedEngineer->id,
+                    'name' => $this->assignedEngineer->name,
+                    'role' => $this->assignedEngineer->role,
+                ] : null
             ),
         ];
     }

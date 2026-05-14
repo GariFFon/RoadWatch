@@ -403,10 +403,7 @@ async function openDetail(id) {
     document.getElementById('so-footer').style.display   = 'none';
 
     try {
-        const [detailRes, optRes] = await Promise.all([
-            axios.get(`/api/v1/admin/complaints/${id}`),
-            fetch('/api/v1/complaint-options').then(r => r.json()),
-        ]);
+        const detailRes = await axios.get(`/api/v1/admin/complaints/${id}`);
         const c = detailRes.data.data;
         const s   = STATUS_CFG[c.status]  ?? {label:c.status,  color:'#374151', bg:'#f3f4f6', icon:'📌'};
         const sev = SEV_CFG[c.severity]   ?? {bg:'#f3f4f6', color:'#374151', label:c.severity, icon:'•'};
@@ -526,10 +523,26 @@ async function openDetail(id) {
                    <span style="font-size:1.5rem;">📭</span> No history yet.
                </div>`;
 
-        // ── Footer status dropdown ────────────────────────────────────────────
-        document.getElementById('so-new-status').innerHTML =
-            '<option value="">— Select new status —</option>' +
-            optRes.statuses.map(st=>`<option value="${st.value}">${st.icon} ${st.label}</option>`).join('');
+        // ── Footer status dropdown — only valid next transitions from backend ──
+        const nextStatuses = c.next_statuses ?? [];
+        const sel = document.getElementById('so-new-status');
+        if (nextStatuses.length === 0) {
+            // Terminal state — nothing to transition to
+            sel.innerHTML = `<option value="" disabled selected>✅ No further actions available</option>`;
+            sel.disabled = true;
+            document.getElementById('so-update-btn').disabled = true;
+            document.getElementById('so-update-btn').style.opacity = '0.45';
+        } else {
+            sel.disabled = false;
+            document.getElementById('so-update-btn').disabled = false;
+            document.getElementById('so-update-btn').style.opacity = '1';
+            sel.innerHTML =
+                '<option value="">— Select next status —</option>' +
+                nextStatuses.map(statusKey => {
+                    const cfg = STATUS_CFG[statusKey] ?? {label: statusKey.replace(/_/g,' '), icon:'📌'};
+                    return `<option value="${statusKey}">${cfg.icon} ${cfg.label}</option>`;
+                }).join('');
+        }
         document.getElementById('so-remarks').value = '';
         document.getElementById('so-update-error').style.display = 'none';
 

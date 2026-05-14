@@ -121,7 +121,7 @@ class ComplaintController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'feedback']);
+        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'feedback', 'assignedEngineer']);
         $complaint->incrementViews();
 
         return new ComplaintResource($complaint);

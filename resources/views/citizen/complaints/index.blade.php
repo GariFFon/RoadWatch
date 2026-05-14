@@ -249,17 +249,25 @@ function renderModal(c){
     }
 
     // Details rows
+    const engineerName = c.assigned_engineer?.name ?? null;
     const rows = [
         ['Complaint #', c.complaint_number],
         ['Category',    c.category?.name??'—'],
         ['Severity',    sev.label],
         ['Status',      s.label],
         ['Location',    c.location],
+        ['👷 Engineer',  engineerName ?? '—'],
         ['Submitted',   new Date(c.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})],
         ['Views',       c.views_count+' views'],
         ['Votes',       c.votes_count+' upvotes'],
         ...(c.resolved_at?[['Resolved', new Date(c.resolved_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})]]:[] ),
     ];
+
+    // Engineer badge for the header (shown when assigned)
+    const engineerBadge = engineerName
+        ? `<span style="font-size:.65rem;font-weight:600;padding:.2rem .5rem;border-radius:9999px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;">👷 ${esc(engineerName)}</span>`
+        : '';
+
 
     const html = `
     <div style="padding:1.5rem;">
@@ -271,6 +279,7 @@ function renderModal(c){
                     <span style="font-size:.65rem;font-family:monospace;background:#f3f4f6;color:#6b7280;padding:.15rem .5rem;border-radius:9999px;">${c.complaint_number}</span>
                     <span style="font-size:.65rem;font-weight:700;padding:.2rem .625rem;border-radius:9999px;background:${s.bg};color:${s.color};border:1px solid ${s.border};">${s.label}</span>
                     <span style="font-size:.65rem;font-weight:700;padding:.2rem .5rem;border-radius:9999px;background:${sev.bg};color:${sev.color};">${sev.label}</span>
+                    ${engineerBadge}
                     ${c.is_anonymous?'<span style="font-size:.65rem;font-weight:600;padding:.2rem .5rem;border-radius:9999px;background:#f3f4f6;color:#6b7280;">👤 Anonymous</span>':''}
                 </div>
                 <h2 style="font-size:1.125rem;font-weight:700;color:#111827;margin:0 0 .25rem;">${esc(c.title)}</h2>

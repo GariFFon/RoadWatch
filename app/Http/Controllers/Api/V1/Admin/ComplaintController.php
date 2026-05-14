@@ -49,7 +49,18 @@ class ComplaintController extends Controller
             'status'  => ['required', 'in:pending,under_review,in_progress,resolved,rejected'],
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
-        $complaint->update(['status' => $data['status']]);
-        return response()->json(['message' => 'Status updated.', 'complaint' => new ComplaintResource($complaint)]);
+
+        if (!$complaint->canTransitionTo($data['status'])) {
+            return response()->json([
+                'message' => "Invalid transition: [{$complaint->status}] → [{$data['status']}].",
+            ], 422);
+        }
+
+        $complaint->updateStatus($data['status'], auth()->user(), $data['remarks'] ?? null);
+
+        return response()->json([
+            'message'   => 'Status updated.',
+            'complaint' => new ComplaintResource($complaint->fresh()),
+        ]);
     }
 }
