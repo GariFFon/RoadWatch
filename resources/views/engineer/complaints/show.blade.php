@@ -91,7 +91,7 @@
         </div>
 
         {{-- Right: upload evidence + status update + citizen --}}
-        <div style="position:sticky;top:76px;display:flex;flex-direction:column;gap:1.25rem;">
+        <div id="right-col" style="position:sticky;top:76px;display:flex;flex-direction:column;gap:1.25rem;">
 
             {{-- Upload Work Evidence --}}
             <div class="eng-card" style="padding:1.5rem;" id="upload-card">
@@ -321,9 +321,65 @@ async function loadDetail() {
         // ── Update form (uses backend next_statuses — engineer only sees allowed transitions) ──
         renderUpdateForm(c.status, c.next_statuses ?? []);
 
+        // ── READ-ONLY mode for verified complaints ──────────────────────────
+        if (c.status === 'verified') {
+            // 1. Hide interactive right-panel cards
+            document.getElementById('upload-card').style.display = 'none';
+            document.getElementById('update-card').style.display = 'none';
+
+            // 2. Inject a read-only banner into the sticky right column
+            const rightCol = document.getElementById('right-col');
+            if (rightCol) {
+                const ro = document.createElement('div');
+                ro.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;
+                                border-radius:1rem;padding:1.5rem;text-align:center;">
+                        <div style="font-size:2.5rem;margin-bottom:.625rem;">🏆</div>
+                        <p style="font-size:.9375rem;font-weight:800;color:#14532d;margin:0;">Task Verified & Closed</p>
+                        <p style="font-size:.78rem;color:#16a34a;margin:.375rem 0 0;">
+                            This complaint has been officially verified by the admin.<br>
+                            No further actions are available.
+                        </p>
+                        ${(()=>{
+                            const vEntry = (c.status_histories??[]).slice().reverse().find(h=>h.new_status==='verified');
+                            if (!vEntry) return '';
+                            const who  = vEntry.changed_by ? `${esc(vEntry.changed_by.name)} (ID: ${vEntry.changed_by.id})` : 'Admin';
+                            const when = new Date(vEntry.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+                            return `<div style="margin-top:1rem;padding:.75rem;background:#fff;border-radius:.625rem;border:1px solid #bbf7d0;font-size:.78rem;text-align:left;">
+                                <div style="color:#6b7280;">Verified by: <strong style="color:#15803d;">${who}</strong></div>
+                                <div style="color:#9ca3af;margin-top:.2rem;">🕐 ${when}</div>
+                            </div>`;
+                        })()}
+                        <a href="{{ route('engineer.complaints.completed') }}"
+                           style="display:inline-flex;align-items:center;gap:.375rem;margin-top:1rem;
+                                  background:#14532d;color:#fff;border-radius:.5rem;padding:.5rem 1rem;
+                                  font-size:.8125rem;font-weight:600;text-decoration:none;">
+                            ← Back to Completed Tasks
+                        </a>
+                    </div>`;
+                rightCol.insertBefore(ro, rightCol.firstChild);
+            }
+
+            // 3. Add a READ ONLY ribbon to the header
+            const headerPanel = document.getElementById('status-update-panel');
+            if (headerPanel) {
+                headerPanel.innerHTML = `
+                    <div style="display:inline-flex;align-items:center;gap:.375rem;background:#f0fdf4;
+                                color:#14532d;border:1.5px solid #86efac;border-radius:9999px;
+                                padding:.3rem .875rem;font-size:.75rem;font-weight:700;">
+                        🔒 READ ONLY — Verified & Closed
+                    </div>`;
+            }
+
+            // 4. Make after-media non-deletable (re-render without delete buttons)
+            renderAfterMedia(after, false);
+        }
+        // ────────────────────────────────────────────────────────────────────
+
         // Show content
         document.getElementById('detail-loading').style.display = 'none';
         document.getElementById('detail-content').style.display = 'block';
+
 
     } catch(e) {
         document.getElementById('detail-loading').innerHTML =
@@ -442,14 +498,14 @@ function mediaThumb(m, deletable) {
     </div>`;
 }
 
-function renderAfterMedia(items) {
+function renderAfterMedia(items, allowDelete = true) {
     const el    = document.getElementById('d-after-media');
     const empty = document.getElementById('after-empty');
     const count = document.getElementById('after-count');
     count.textContent = items.length ? `${items.length} file(s)` : '';
     if (!items.length) { el.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
-    el.innerHTML = items.map(m => mediaThumb(m, true)).join('');
+    el.innerHTML = items.map(m => mediaThumb(m, allowDelete)).join('');
 }
 
 async function deleteEvidence(mediaId, btn) {

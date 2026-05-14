@@ -74,6 +74,15 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
            class="eng-nav-link {{ request()->routeIs('engineer.complaints.index') ? 'active' : '' }}">
             <span class="icon">📋</span> My Assignments
         </a>
+        <a href="{{ route('engineer.complaints.completed') }}"
+           class="eng-nav-link {{ request()->routeIs('engineer.complaints.completed') ? 'active' : '' }}"
+           style="{{ request()->routeIs('engineer.complaints.completed') ? '' : '' }}">
+            <span class="icon">🏆</span> Completed Tasks
+            {{-- Live badge showing verified count --}}
+            <span id="completed-badge" style="margin-left:auto;min-width:20px;height:20px;background:rgba(16,185,129,.2);
+                  color:#059669;font-size:.6rem;font-weight:700;border-radius:9999px;
+                  display:inline-flex;align-items:center;justify-content:center;padding:0 .35rem;"></span>
+        </a>
 
         <div class="eng-nav-label">System</div>
         <a href="{{ url('/') }}" class="eng-nav-link">
@@ -124,5 +133,17 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
     </main>
 </div>
 
+<script>
+// Load verified count badge for sidebar
+(async () => {
+    try {
+        const r = await fetch('/api/v1/engineer/complaints?completed=1&per_page=1');
+        const d = await r.json();
+        const count = d.meta?.total ?? 0;
+        const el = document.getElementById('completed-badge');
+        if (el && count > 0) el.textContent = count;
+    } catch(_) {}
+})();
+</script>
 </body>
 </html>

@@ -12,9 +12,22 @@ class ComplaintController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $complaints = Complaint::with(['category', 'user:id,name'])
-            ->where('assigned_to', auth()->id())
-            ->latest()->paginate(15);
+        $query = Complaint::with(['category', 'user:id,name'])
+            ->where('assigned_to', auth()->id());
+
+        if ($request->boolean('completed')) {
+            // Completed Tasks tab — only admin-verified complaints
+            $query->where('status', Complaint::STATUS_VERIFIED);
+        } else {
+            // Active Assignments — exclude terminal states
+            $query->whereNotIn('status', [Complaint::STATUS_VERIFIED, Complaint::STATUS_REJECTED]);
+
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+        }
+
+        $complaints = $query->latest()->paginate(15);
         return ComplaintResource::collection($complaints);
     }
 

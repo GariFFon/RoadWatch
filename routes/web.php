@@ -45,8 +45,9 @@ Route::middleware(['auth', 'password.setup'])->group(function () {
 
     // ── Engineer panel ─────────────────────────────────────────────────
     Route::middleware('role:engineer')->prefix('engineer')->name('engineer.')->group(function () {
-        Route::get('complaints',             fn() => view('engineer.complaints.index'))->name('complaints.index');
-        Route::get('complaints/{complaint}', fn() => view('engineer.complaints.show')) ->name('complaints.show');
+        Route::get('complaints',                fn() => view('engineer.complaints.index'))    ->name('complaints.index');
+        Route::get('complaints/completed',      fn() => view('engineer.complaints.completed'))->name('complaints.completed');
+        Route::get('complaints/{complaint}',    fn() => view('engineer.complaints.show'))     ->name('complaints.show');
     });
 
     // ── Admin panel ────────────────────────────────────────────────────

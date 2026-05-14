@@ -219,13 +219,39 @@ function renderModal(c){
     const s   = STATUS_CONFIG[c.status]  || {label:c.status,color:'#374151',bg:'#f3f4f6',border:'#d1d5db'};
     const sev = SEV_CONFIG[c.severity]   || {label:c.severity,color:'#374151',bg:'#f3f4f6'};
     const currentStep = PIPELINE.findIndex(p=>p.key===c.status);
-    const isRejected  = c.status==='rejected';
+    const isRejected  = c.status === 'rejected';
+    const isVerified  = c.status === 'verified';
+
+    // Find the verification history entry to show who verified
+    const verifyEntry = isVerified
+        ? (c.status_histories ?? []).slice().reverse().find(h => h.new_status === 'verified')
+        : null;
+    const verifyActor = verifyEntry?.changed_by
+        ? `${esc(verifyEntry.changed_by.name)} (ID: ${verifyEntry.changed_by.id})`
+        : 'Admin';
+    const verifyWhen = verifyEntry
+        ? new Date(verifyEntry.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+        : '';
 
     // Pipeline HTML
     let pipelineHtml = isRejected
         ? `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:.75rem;padding:1rem;">
                <h3 style="color:#7f1d1d;margin:0 0 .25rem;font-size:.9rem;font-weight:700;">❌ Complaint Rejected</h3>
                <p style="color:#991b1b;margin:0;font-size:.8rem;">Please contact support if you have questions.</p>
+           </div>`
+        : isVerified
+        ? `<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:.875rem;padding:1.125rem;">
+               <div style="display:flex;align-items:center;gap:.625rem;margin-bottom:.625rem;">
+                   <span style="font-size:1.5rem;">🏆</span>
+                   <div>
+                       <h3 style="color:#14532d;margin:0;font-size:.9rem;font-weight:800;">Task Completed & Verified ✓</h3>
+                       <p style="color:#16a34a;margin:.125rem 0 0;font-size:.75rem;">This issue has been resolved and officially verified by admin.</p>
+                   </div>
+               </div>
+               ${verifyEntry ? `<div style="background:#fff;border-radius:.5rem;border:1px solid #bbf7d0;padding:.5rem .75rem;font-size:.75rem;">
+                   <span style="color:#6b7280;">Verified by: </span><strong style="color:#15803d;">${verifyActor}</strong>
+                   ${verifyWhen ? `<span style="color:#9ca3af;margin-left:.5rem;">· ${verifyWhen}</span>` : ''}
+               </div>` : ''}
            </div>`
         : `<div style="display:flex;align-items:center;">${PIPELINE.map((step,idx)=>{
             const done = currentStep>=idx;
