@@ -230,52 +230,116 @@ function renderAll(c) {
                         <div style="flex:1;min-width:0;padding-top:0.125rem;">
                             <div style="font-size:0.8125rem;font-weight:700;color:#111827;">
                                 ${h.old_status ? capWords(h.old_status) + ' → ' + capWords(h.new_status) : '📋 Complaint Filed'}
-                            </div>
-                            ${h.remarks ? `<p style="font-size:0.75rem;color:#6b7280;margin:0.25rem 0 0;font-style:italic;">"${escHtml(h.remarks)}"</p>` : ''}
-                            <div style="display:flex;gap:0.75rem;margin-top:0.25rem;font-size:0.7rem;color:#9ca3af;">
-                                <span>${formatDate(h.created_at)}</span>
-                                ${h.changed_by ? `<span>by ${escHtml(h.changed_by.name)}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('')}
-            </div>
-          </div>`;
-
-    document.getElementById('card-timeline').innerHTML =
-        `<h2 class="rw-section-title">🕐 Status Timeline</h2>${timelineItems}`;
-
-    // ── Feedback card ────────────────────────────────────────────────────────
-    if (c.status === 'resolved') {
-        let feedbackHtml = '';
-        if (c.feedback) {
-            const stars = Array.from({length:5}, (_,i) => i < c.feedback.rating ? '⭐' : '☆').join('');
-            feedbackHtml = `
-                <div class="rw-card" style="border:1px solid #86efac;background:#f0fdf4;">
-                    <h2 class="rw-section-title" style="color:#15803d;">⭐ Your Feedback</h2>
-                    <div style="margin-top:0.875rem;text-align:center;">
-                        <div style="font-size:2rem;margin-bottom:0.25rem;">${stars}</div>
-                        <p style="font-size:0.813rem;color:#166534;font-weight:600;margin:0;">You rated this ${c.feedback.rating}/5</p>
-                        ${c.feedback.comment ? `<p style="font-size:0.8125rem;color:#15803d;font-style:italic;margin:0.5rem 0 0;">"${escHtml(c.feedback.comment)}"</p>` : ''}
+                                // ── Ratings section (admin engineer rating + citizen feedback) ───────────
+    if (c.status === 'verified') {
+        // ── SEALED: both parties have rated ──
+        if (c.ratings_locked) {
+            const er = c.engineer_rating;
+            const fb = c.feedback;
+            const erStars = er ? '★'.repeat(er.score)+'☆'.repeat(5-er.score) : '—';
+            const fbStars = fb ? '★'.repeat(fb.rating)+'☆'.repeat(5-fb.rating) : '—';
+            document.getElementById('card-feedback').innerHTML = `
+                <div class="rw-card" style="border:1.5px solid #fbbf24;background:#fff3cd;">
+                    <h2 class="rw-section-title" style="color:#92400e;text-align:center;">🔒 All Ratings Sealed &amp; Final</h2>
+                    <p style="font-size:.78rem;color:#92400e;text-align:center;margin:-.25rem 0 .875rem;">
+                        Both admin and citizen have submitted their ratings. No further changes are allowed.
+                    </p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                        ${er ? `
+                        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:.625rem;padding:.75rem;">
+                            <div style="font-size:.72rem;font-weight:700;color:#14532d;margin-bottom:.3rem;">⭐ Engineer Work (Admin Rating)</div>
+                            <div style="font-size:1.5rem;color:#f59e0b;">${erStars}</div>
+                            <div style="font-size:.875rem;font-weight:700;color:#374151;margin-top:.2rem;">${er.emoji} ${escHtml(er.label)} (${er.score}/5)</div>
+                            ${er.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.25rem;">"${escHtml(er.comment)}"</div>` : ''}
+                            <div style="font-size:.7rem;color:#9ca3af;margin-top:.2rem;">by ${escHtml(er.rated_by?.name ?? 'Admin')}</div>
+                        </div>` : ''}
+                        ${fb ? `
+                        <div style="background:#eef2ff;border:1px solid #a5b4fc;border-radius:.625rem;padding:.75rem;">
+                            <div style="font-size:.72rem;font-weight:700;color:#3730a3;margin-bottom:.3rem;">💬 Your Feedback</div>
+                            <div style="font-size:1.5rem;color:#f59e0b;">${fbStars}</div>
+                            <div style="font-size:.875rem;font-weight:700;color:#374151;margin-top:.2rem;">${fb.emoji} ${escHtml(fb.label)} (${fb.rating}/5)</div>
+                            ${fb.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.25rem;">"${escHtml(fb.comment)}"</div>` : ''}
+                        </div>` : ''}
                     </div>
                 </div>`;
+            return; // skip individual cards below
+        }
+
+        // ── Admin engineer rating (not yet locked) ──
+        if (c.engineer_rating) {
+            const r = c.engineer_rating;
+            const adminStars = '★'.repeat(r.score) + '☆'.repeat(5 - r.score);
+            document.getElementById('card-feedback').insertAdjacentHTML('beforebegin', `
+                <div class="rw-card" style="border:1.5px solid #fde68a;background:#fffbeb;margin-bottom:1rem;">
+                    <h2 class="rw-section-title" style="color:#92400e;">⭐ Engineer Work Quality (Admin Rating)</h2>
+                    <div style="display:flex;align-items:center;gap:1rem;margin-top:.875rem;flex-wrap:wrap;">
+                        <div style="font-size:2rem;color:#f59e0b;letter-spacing:.08em;">${adminStars}</div>
+                        <div>
+                            <div style="font-size:.9rem;font-weight:700;color:#374151;">${r.emoji} ${escHtml(r.label)} (${r.score}/5)</div>
+                            ${r.comment ? `<div style="font-size:.8rem;color:#6b7280;font-style:italic;margin-top:.2rem;">"${escHtml(r.comment)}"</div>` : ''}
+                            <div style="font-size:.72rem;color:#9ca3af;margin-top:.2rem;">Rated by ${escHtml(r.rated_by?.name ?? 'Admin')}</div>
+                        </div>
+                    </div>
+                </div>`);
+        }
+    }
+
+    // ── Citizen Feedback card (interactive, not yet locked) ──────────────────
+    if (c.status === 'verified' || c.status === 'resolved') {
+        const LABELS = [null,'Very Poor','Poor','Average','Good','Excellent'];
+        const EMOJIS = [null,'😡','😞','😐','😊','😍'];
+        let feedbackHtml = '';
+        if (c.feedback) {
+            const fb  = c.feedback;
+            const stars = '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating);
+            feedbackHtml = `
+                <div class="rw-card" style="border:1px solid #86efac;background:#f0fdf4;">
+                    <h2 class="rw-section-title" style="color:#15803d;">💬 Your Feedback</h2>
+                    <div style="margin-top:.75rem;">
+                        <div style="font-size:1.75rem;color:#f59e0b;">${stars}</div>
+                        <p style="font-size:.875rem;color:#166534;font-weight:700;margin:.25rem 0 0;">
+                            ${EMOJIS[fb.rating]} ${LABELS[fb.rating]} — ${fb.rating}/5
+                        </p>
+                        ${fb.comment ? `<p style="font-size:.8125rem;color:#15803d;font-style:italic;margin:.5rem 0 0;">"${escHtml(fb.comment)}"</p>` : ''}
+                        <p style="font-size:.72rem;color:#9ca3af;margin:.5rem 0 0;">You can update your rating below.</p>
+                    </div>
+                    <div style="margin-top:.875rem;" id="feedback-update-area">
+                        <div style="display:flex;gap:.25rem;margin-bottom:.625rem;" id="stars-row">
+                            ${[1,2,3,4,5].map(i=>`<span class="star-btn" data-val="${i}"
+                                onclick="handleStarClick(${i})"
+                                style="font-size:1.75rem;cursor:pointer;color:${i<=fb.rating?'#f59e0b':'#d1d5db'};transition:color .1s;">${i<=fb.rating?'★':'☆'}</span>`).join('')}
+                        </div>
+                        <textarea id="feedback-comment" placeholder="Update comment (optional)..." rows="2"
+                                  style="width:100%;border:1.5px solid #86efac;border-radius:.625rem;padding:.5rem;
+                                         font-size:.8125rem;resize:none;outline:none;background:#fff;font-family:inherit;box-sizing:border-box;">${escHtml(fb.comment??'')}</textarea>
+                        <button onclick="submitFeedback()" id="feedback-btn"
+                                style="margin-top:.625rem;background:#16a34a;color:#fff;border:none;border-radius:.625rem;
+                                       padding:.625rem 1.25rem;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit;">
+                            ⭐ Update Feedback
+                        </button>
+                        <span id="feedback-msg" style="font-size:.78rem;font-weight:600;display:none;margin-left:.5rem;"></span>
+                    </div>
+                </div>`;
+            window.selectedRating = fb.rating;
         } else {
             feedbackHtml = `
                 <div class="rw-card" style="border:1px solid #86efac;background:#f0fdf4;" id="feedback-card">
-                    <h2 class="rw-section-title" style="color:#15803d;">⭐ Rate the Resolution</h2>
-                    <div style="margin-top:0.875rem;">
-                        <p style="font-size:0.875rem;color:#166534;margin:0 0 0.75rem;text-align:center;">How satisfied are you with the resolution?</p>
-                        <div style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;" id="stars-row">
-                            ${[1,2,3,4,5].map(i=>`<span class="star-btn" data-val="${i}" onclick="handleStarClick(${i})">☆</span>`).join('')}
+                    <h2 class="rw-section-title" style="color:#15803d;">💬 Rate the Resolution</h2>
+                    <div style="margin-top:.875rem;">
+                        <p style="font-size:.875rem;color:#166534;margin:0 0 .75rem;text-align:center;">How satisfied are you with how this was resolved?</p>
+                        <div style="display:flex;justify-content:center;gap:.5rem;margin-bottom:1rem;" id="stars-row">
+                            ${[1,2,3,4,5].map(i=>`<span class="star-btn" data-val="${i}" onclick="handleStarClick(${i})"
+                                style="font-size:2rem;cursor:pointer;color:#d1d5db;transition:color .1s;">☆</span>`).join('')}
                         </div>
+                        <p id="star-label" style="text-align:center;font-size:.78rem;font-weight:700;color:#6b7280;margin:-.5rem 0 .75rem;"></p>
                         <textarea id="feedback-comment" placeholder="Optional comment..." rows="3"
-                                  style="width:100%;border:1.5px solid #86efac;border-radius:0.625rem;padding:0.625rem;
-                                         font-size:0.8125rem;resize:none;outline:none;background:#fff;font-family:inherit;box-sizing:border-box;"></textarea>
-                        <p id="feedback-error" style="color:#dc2626;font-size:0.813rem;display:none;">Please select a star rating.</p>
+                                  style="width:100%;border:1.5px solid #86efac;border-radius:.625rem;padding:.625rem;
+                                         font-size:.8125rem;resize:none;outline:none;background:#fff;font-family:inherit;box-sizing:border-box;"></textarea>
+                        <p id="feedback-error" style="color:#dc2626;font-size:.813rem;display:none;">Please select a star rating.</p>
                         <button onclick="submitFeedback()" id="feedback-btn"
-                                style="margin-top:0.75rem;width:100%;background:#16a34a;color:#fff;border:none;
-                                       border-radius:0.625rem;padding:0.625rem;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:inherit;">
-                            Submit Feedback
+                                style="margin-top:.75rem;width:100%;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;
+                                       border-radius:.625rem;padding:.625rem;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit;">
+                            ⭐ Submit Feedback
                         </button>
                     </div>
                 </div>`;
@@ -285,27 +349,38 @@ function renderAll(c) {
 }
 
 // ── Star rating interactions ────────────────────────────────────────────────
-window.selectedRating = 0;
+window.selectedRating = window.selectedRating || 0;
+const STAR_LABELS_SHOW = [null,'Very Poor 😡','Poor 😞','Average 😐','Good 😊','Excellent 😍'];
 window.handleStarClick = function(n) {
     window.selectedRating = n;
-    document.querySelectorAll('.star-btn').forEach((s,i) => s.textContent = i < n ? '⭐' : '☆');
+    document.querySelectorAll('.star-btn').forEach((s,i) => {
+        s.textContent   = i < n ? '★' : '☆';
+        s.style.color   = i < n ? '#f59e0b' : '#d1d5db';
+        s.style.transform = i < n ? 'scale(1.1)' : 'scale(1)';
+    });
+    const lbl = document.getElementById('star-label');
+    if (lbl) lbl.textContent = STAR_LABELS_SHOW[n] || '';
 };
 
 // ── Submit feedback via API ─────────────────────────────────────────────────
 window.submitFeedback = async function() {
     if (!window.selectedRating) {
-        document.getElementById('feedback-error').style.display = 'block'; return;
+        const err = document.getElementById('feedback-error');
+        if(err) { err.style.display = 'block'; } return;
     }
     const btn = document.getElementById('feedback-btn');
-    btn.disabled = true; btn.textContent = '⏳ Submitting...';
+    btn.disabled = true; btn.textContent = '⏳ Submitting…';
     try {
         await axios.post(`/api/v1/citizen/complaints/${window.COMPLAINT_ID}/feedback`, {
             rating:  window.selectedRating,
-            comment: document.getElementById('feedback-comment').value || null,
+            comment: document.getElementById('feedback-comment')?.value || null,
         });
-        window.loadComplaint();
+        const msg = document.getElementById('feedback-msg');
+        if (msg) { msg.textContent = '✅ Saved!'; msg.style.color='#059669'; msg.style.display='inline'; }
+        btn.textContent = '⭐ Updated!';
+        setTimeout(() => window.loadComplaint(), 1000);
     } catch (err) {
-        btn.disabled = false; btn.textContent = 'Submit Feedback';
+        btn.disabled = false; btn.textContent = '⭐ Submit Feedback';
         alert(err.response?.data?.message ?? 'Failed to submit feedback.');
     }
 };

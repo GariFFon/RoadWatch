@@ -19,19 +19,6 @@ return new class extends Migration
             $table->unique(['complaint_id', 'user_id']);
         });
 
-        // Comments — public discussion thread on complaints
-        Schema::create('comments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('complaint_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('parent_id')->nullable()->constrained('comments')->cascadeOnDelete();
-            $table->text('body');
-            $table->boolean('is_official')->default(false); // admin/engineer official reply
-            $table->timestamps();
-
-            $table->index('complaint_id');
-        });
-
         // Notifications — Laravel built-in table
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -46,7 +33,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('complaint_upvotes');
-        Schema::dropIfExists('comments');
         Schema::dropIfExists('notifications');
     }
 };

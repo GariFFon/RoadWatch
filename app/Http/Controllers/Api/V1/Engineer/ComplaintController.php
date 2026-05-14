@@ -34,7 +34,7 @@ class ComplaintController extends Controller
     public function show(Complaint $complaint): ComplaintResource
     {
         abort_unless($complaint->assigned_to === auth()->id(), 403);
-        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'user:id,name', 'assignedEngineer:id,name', 'ratedBy:id,name']);
+        $complaint->load(['category', 'media', 'statusHistories.changedBy', 'user:id,name', 'assignedEngineer:id,name', 'ratedBy:id,name', 'feedback']);
         return new ComplaintResource($complaint);
     }
 

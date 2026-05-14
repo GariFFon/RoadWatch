@@ -121,14 +121,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Comments posted by this user.
-     */
-    public function comments(): HasMany
-    {
-        return $this->hasMany(Comment::class);
-    }
-
-    /**
      * Issues this user has upvoted.
      */
     public function upvotes(): HasMany

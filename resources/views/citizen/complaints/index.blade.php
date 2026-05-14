@@ -416,10 +416,157 @@ function renderModal(c){
                 </div>`;
             })()}
         </div>
+
+        ${isVerified ? `
+        {{-- ── Admin's Engineer Rating (visible to citizen) ── --}}
+        <div style="margin-top:1.25rem;background:#fffbeb;border:1.5px solid #fde68a;border-radius:.875rem;padding:1rem;">
+            <h3 style="font-size:.875rem;font-weight:700;color:#92400e;margin:0 0 .75rem;">⭐ Engineer Work Quality Rating (by Admin)</h3>
+            ${c.engineer_rating ? (() => {
+                const r = c.engineer_rating;
+                const stars = '★'.repeat(r.score) + '☆'.repeat(5 - r.score);
+                return `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div style="font-size:1.75rem;color:#f59e0b;letter-spacing:.08em;">${stars}</div>
+                    <div>
+                        <div style="font-size:.875rem;font-weight:700;color:#374151;">${r.emoji} ${esc(r.label)} <span style="color:#9ca3af;font-weight:400;">(${r.score}/5)</span></div>
+                        ${r.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.2rem;">"${esc(r.comment)}"</div>` : ''}
+                        <div style="font-size:.7rem;color:#9ca3af;margin-top:.2rem;">Rated by ${esc(r.rated_by?.name ?? 'Admin')}</div>
+                    </div>
+                </div>`;
+            })() : `<p style="font-size:.8125rem;color:#9ca3af;margin:0;">⏳ Admin hasn't rated the engineer's work yet.</p>`}
+        </div>
+
+        {{-- ── Citizen Rating Section ── --}}
+        ${c.ratings_locked ? (() => {
+            // ── SEALED VIEW (both admin + citizen have rated) ──
+            const fb = c.feedback;
+            const er = c.engineer_rating;
+            const fbStars = fb ? '★'.repeat(fb.rating)+'☆'.repeat(5-fb.rating) : '';
+            const erStars = er ? '★'.repeat(er.score)+'☆'.repeat(5-er.score) : '';
+            return `
+            <div style="margin-top:1rem;background:#fff3cd;border:1.5px solid #fbbf24;border-radius:.875rem;padding:1rem;text-align:center;">
+                <div style="font-size:.875rem;font-weight:800;color:#92400e;margin-bottom:.75rem;">🔒 All Ratings Sealed & Final</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem;text-align:left;">
+                    ${er ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:.5rem;padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;font-weight:700;color:#14532d;margin-bottom:.2rem;">⭐ Engineer Work (Admin)</div>
+                        <div style="font-size:1.1rem;color:#f59e0b;">${erStars}</div>
+                        <div style="font-size:.8rem;font-weight:700;color:#374151;">${esc(er.label)} (${er.score}/5)</div>
+                        ${er.comment ? `<div style="font-size:.72rem;color:#6b7280;font-style:italic;margin-top:.15rem;">"${esc(er.comment)}"</div>` : ''}
+                    </div>` : ''}
+                    ${fb ? `<div style="background:#eef2ff;border:1px solid #a5b4fc;border-radius:.5rem;padding:.625rem .75rem;">
+                        <div style="font-size:.7rem;font-weight:700;color:#3730a3;margin-bottom:.2rem;">💬 Your Feedback</div>
+                        <div style="font-size:1.1rem;color:#f59e0b;">${fbStars}</div>
+                        <div style="font-size:.8rem;font-weight:700;color:#374151;">${fb.emoji} ${esc(fb.label)} (${fb.rating}/5)</div>
+                        ${fb.comment ? `<div style="font-size:.72rem;color:#6b7280;font-style:italic;margin-top:.15rem;">"${esc(fb.comment)}"</div>` : ''}
+                    </div>` : ''}
+                </div>
+            </div>`;
+        })() : `
+        <div style="margin-top:1rem;background:linear-gradient(135deg,#eef2ff,#f0f9ff);border:1.5px solid #c7d2fe;border-radius:.875rem;padding:1rem;">
+            <h3 style="font-size:.875rem;font-weight:700;color:#3730a3;margin:0 0 .625rem;">💬 Your Feedback</h3>
+            ${c.feedback ? (() => {
+                const fb = c.feedback;
+                const stars = '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating);
+                return `
+                <div style="background:#fff;border-radius:.625rem;border:1px solid #a5b4fc;padding:.75rem;margin-bottom:.75rem;">
+                    <div style="font-size:1.25rem;color:#f59e0b;">${stars}</div>
+                    <div style="font-size:.8125rem;font-weight:700;color:#374151;margin-top:.2rem;">${fb.emoji} ${esc(fb.label)} (${fb.rating}/5)</div>
+                    ${fb.comment ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:.25rem;">"${esc(fb.comment)}"</div>` : ''}
+                    <div style="font-size:.7rem;color:#9ca3af;margin-top:.2rem;">Your rating — you can update it below.</div>
+                </div>`;
+            })() : ''}
+            <div id="ctz-stars" style="display:flex;align-items:center;gap:.2rem;margin-bottom:.625rem;">
+                ${[1,2,3,4,5].map(n =>
+                    `<button id="ctz-star-${n}" onclick="ctzSelectStar(${n})"
+                             onmouseover="ctzHover(${n})" onmouseout="ctzUnhover()"
+                             style="font-size:1.625rem;background:none;border:none;cursor:pointer;padding:.1rem;
+                                    color:${c.feedback && n<=c.feedback.rating ? '#f59e0b' : '#d1d5db'};
+                                    transform:${c.feedback && n<=c.feedback.rating ? 'scale(1.1)' : 'scale(1)'};
+                                    transition:all .1s;line-height:1;">
+                        ${c.feedback && n<=c.feedback.rating ? '★' : '☆'}
+                    </button>`
+                ).join('')}
+                <span id="ctz-star-label" style="font-size:.75rem;font-weight:700;color:#6366f1;margin-left:.5rem;">
+                    ${c.feedback ? [null,'Very Poor','Poor','Average','Good','Excellent'][c.feedback.rating] : 'Rate this resolution'}
+                </span>
+            </div>
+            <textarea id="ctz-comment" class="ctz-textarea"
+                      placeholder="Optional: Share your experience…"
+                      style="width:100%;resize:vertical;min-height:56px;font-size:.8125rem;border:1.5px solid #c7d2fe;
+                             border-radius:.5rem;padding:.5rem .75rem;outline:none;font-family:inherit;
+                             background:#fff;color:#374151;box-sizing:border-box;margin-bottom:.5rem;">${c.feedback?.comment ?? ''}</textarea>
+            <div style="display:flex;align-items:center;gap:.625rem;">
+                <button onclick="submitCitizenRating(${c.id})"
+                        id="ctz-submit-btn"
+                        style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;border-radius:.5rem;
+                               padding:.5rem 1.125rem;font-size:.8125rem;font-weight:700;cursor:pointer;transition:opacity .15s;">
+                    ${c.feedback ? '⭐ Update My Rating' : '⭐ Submit Rating'}
+                </button>
+                <span id="ctz-msg" style="font-size:.78rem;font-weight:600;display:none;"></span>
+            </div>
+        </div>
+        `}
+        ` : ''}
     </div>`;
 
     const content = document.getElementById('modal-content');
     content.innerHTML = html;
+
+    // Init citizen star state after render
+    if (isVerified) {
+        window._ctzSelectedStar = c.feedback?.rating ?? 0;
+        const labels = {1:'Very Poor 😡',2:'Poor 😞',3:'Average 😐',4:'Good 😊',5:'Excellent 😍'};
+        window.ctzSelectStar = function(n) {
+            window._ctzSelectedStar = n;
+            ctzRenderStars(n);
+        };
+        window.ctzHover    = function(n) { ctzRenderStars(n); };
+        window.ctzUnhover  = function()  { ctzRenderStars(window._ctzSelectedStar); };
+        window.ctzRenderStars = function(filled) {
+            for (let i=1;i<=5;i++) {
+                const btn = document.getElementById('ctz-star-'+i);
+                if(!btn) continue;
+                btn.textContent = i<=filled ? '★' : '☆';
+                btn.style.color = i<=filled ? '#f59e0b' : '#d1d5db';
+                btn.style.transform = i<=filled ? 'scale(1.1)' : 'scale(1)';
+            }
+            const lbl = document.getElementById('ctz-star-label');
+            if(lbl) lbl.textContent = filled ? labels[filled] : 'Rate this resolution';
+        };
+        window.submitCitizenRating = async function(complaintId) {
+            const star    = window._ctzSelectedStar;
+            const comment = document.getElementById('ctz-comment')?.value?.trim() ?? '';
+            const msg     = document.getElementById('ctz-msg');
+            const btn     = document.getElementById('ctz-submit-btn');
+            if (!star) {
+                msg.textContent = '⚠ Please select a star rating first.';
+                msg.style.color = '#dc2626';
+                msg.style.display = 'inline';
+                return;
+            }
+            btn.disabled = true; btn.textContent = '⏳ Saving…';
+            msg.style.display = 'none';
+            try {
+                const res = await axios.post(`/api/v1/citizen/complaints/${complaintId}/feedback`, {
+                    rating:  star,
+                    comment: comment || null,
+                });
+                msg.textContent = '✅ ' + res.data.message;
+                msg.style.color = '#059669';
+                msg.style.display = 'inline';
+                btn.textContent = '⭐ Update My Rating';
+                btn.disabled = false;
+                // Refresh modal to show updated rating
+                setTimeout(() => openModal(complaintId), 1200);
+            } catch(e) {
+                msg.textContent = e.response?.data?.message ?? 'Failed to submit.';
+                msg.style.color = '#dc2626';
+                msg.style.display = 'inline';
+                btn.disabled = false;
+                btn.textContent = '⭐ Submit Rating';
+            }
+        };
+    }
+
     document.getElementById('modal-loading').style.display = 'none';
     content.style.display = 'block';
 }

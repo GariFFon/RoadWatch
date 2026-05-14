@@ -75,23 +75,11 @@ class Feedback extends Model
     protected static function booted(): void
     {
         static::creating(function (Feedback $feedback) {
-            // Feedback can only be submitted on RESOLVED complaints
+            // Feedback can only be submitted on VERIFIED (or legacy resolved) complaints
             $complaint = Complaint::find($feedback->complaint_id);
-
-            if (! $complaint || ! $complaint->isResolved()) {
+            if (! $complaint || !in_array($complaint->status, ['verified', 'resolved'])) {
                 throw new \LogicException(
-                    'Feedback can only be submitted after a complaint is resolved.'
-                );
-            }
-
-            // One feedback per user per complaint (enforced at DB level too)
-            $alreadyExists = static::where('complaint_id', $feedback->complaint_id)
-                ->where('user_id', $feedback->user_id)
-                ->exists();
-
-            if ($alreadyExists) {
-                throw new \LogicException(
-                    'You have already submitted feedback for this complaint.'
+                    'Feedback can only be submitted after a complaint is verified.'
                 );
             }
         });

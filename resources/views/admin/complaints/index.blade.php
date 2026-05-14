@@ -640,7 +640,7 @@ async function openDetail(id) {
         if (c.status === 'verified') {
             // Show rating, hide status-change footer
             ratingPanel.style.display = 'block';
-            renderRatingPanel(c.engineer_rating);
+            renderRatingPanel(c.engineer_rating, c.ratings_locked === true, c.feedback);
             soFooter.style.display    = 'none';
             if (soReadOnly) soReadOnly.style.display = 'flex';
         } else {
@@ -698,10 +698,39 @@ async function adminUpdateStatus() {
 let selectedStarValue = 0;
 const STAR_LABELS = {1:'Very Poor 😡',2:'Poor 😞',3:'Average 😐',4:'Good 😊',5:'Excellent 😍'};
 
-function renderRatingPanel(existingRating) {
+function renderRatingPanel(existingRating, isLocked, citizenFeedback) {
     selectedStarValue = existingRating ? existingRating.score : 0;
     const display = document.getElementById('so-rating-display');
     const form    = document.getElementById('so-rating-form');
+
+    if (isLocked && existingRating) {
+        // ── SEALED: both parties have rated ──
+        const stars  = '★'.repeat(existingRating.score) + '☆'.repeat(5 - existingRating.score);
+        const cStars = citizenFeedback ? '★'.repeat(citizenFeedback.rating) + '☆'.repeat(5 - citizenFeedback.rating) : null;
+        const ratedBy = existingRating.rated_by ? esc(existingRating.rated_by.name) : 'Admin';
+        display.style.display = 'block';
+        display.innerHTML = `
+            <div style="background:#fff3cd;border:1.5px solid #fbbf24;border-radius:.75rem;padding:.875rem;text-align:center;margin-bottom:.5rem;">
+                <div style="font-size:.75rem;font-weight:800;color:#92400e;margin-bottom:.625rem;">🔒 RATINGS SEALED — NO FURTHER CHANGES ALLOWED</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;text-align:left;">
+                    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:.5rem;padding:.5rem .75rem;">
+                        <div style="font-size:.65rem;font-weight:700;color:#14532d;margin-bottom:.2rem;">⭐ Admin → Engineer</div>
+                        <div style="font-size:1rem;color:#f59e0b;">${stars}</div>
+                        <div style="font-size:.78rem;font-weight:700;color:#374151;">${esc(existingRating.label)} (${existingRating.score}/5)</div>
+                        ${existingRating.comment ? `<div style="font-size:.7rem;color:#6b7280;font-style:italic;margin-top:.15rem;">"${esc(existingRating.comment)}"</div>` : ''}
+                        <div style="font-size:.65rem;color:#9ca3af;margin-top:.15rem;">by ${ratedBy}</div>
+                    </div>
+                    ${cStars ? `<div style="background:#eef2ff;border:1px solid #a5b4fc;border-radius:.5rem;padding:.5rem .75rem;">
+                        <div style="font-size:.65rem;font-weight:700;color:#3730a3;margin-bottom:.2rem;">💬 Citizen Feedback</div>
+                        <div style="font-size:1rem;color:#f59e0b;">${cStars}</div>
+                        <div style="font-size:.78rem;font-weight:700;color:#374151;">${esc(citizenFeedback.label)} (${citizenFeedback.rating}/5)</div>
+                        ${citizenFeedback.comment ? `<div style="font-size:.7rem;color:#6b7280;font-style:italic;margin-top:.15rem;">"${esc(citizenFeedback.comment)}"</div>` : ''}
+                    </div>` : ''}
+                </div>
+            </div>`;
+        form.style.display = 'none';
+        return;
+    }
 
     if (existingRating) {
         display.style.display = 'block';

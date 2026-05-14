@@ -69,6 +69,9 @@ class ComplaintResource extends JsonResource
 
             'feedback' => $this->whenLoaded('feedback', fn() => $this->feedback ? [
                 'rating'  => $this->feedback->rating,
+                'label'   => [1=>'Very Poor',2=>'Poor',3=>'Average',4=>'Good',5=>'Excellent'][$this->feedback->rating] ?? '—',
+                'emoji'   => [1=>'😡',2=>'😞',3=>'😐',4=>'😊',5=>'😍'][$this->feedback->rating] ?? '⭐',
+                'stars'   => str_repeat('★', $this->feedback->rating) . str_repeat('☆', 5 - $this->feedback->rating),
                 'comment' => $this->feedback->comment,
             ] : null),
 
@@ -100,6 +103,10 @@ class ComplaintResource extends JsonResource
                 ] : null,
                 'rated_at' => $this->rated_at?->toIso8601String(),
             ] : null,
+
+            // 🔒 True when BOTH admin engineer_rating AND citizen feedback exist → all ratings sealed
+            'ratings_locked' => $this->engineer_rating !== null
+                && $this->whenLoaded('feedback', fn() => $this->feedback !== null, false),
         ];
     }
 }

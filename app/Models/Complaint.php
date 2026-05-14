@@ -277,14 +277,6 @@ class Complaint extends Model
     }
 
     /**
-     * Comments / public discussion on this complaint.
-     */
-    public function comments(): HasMany
-    {
-        return $this->hasMany(Comment::class);
-    }
-
-    /**
      * Upvotes from citizens.
      */
     public function upvotes(): HasMany

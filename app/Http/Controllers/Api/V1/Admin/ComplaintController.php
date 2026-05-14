@@ -29,7 +29,8 @@ class ComplaintController extends Controller
             'user:id,name,email',
             'assignedEngineer:id,name,email',
             'ratedBy:id,name',
-            'media',                          // includes before + after
+            'feedback',
+            'media',
             'statusHistories.changedBy:id,name,role',
         ]);
         return new ComplaintResource($complaint);
@@ -83,6 +84,14 @@ class ComplaintController extends Controller
     public function rateEngineer(Request $request, Complaint $complaint): JsonResponse
     {
         abort_unless($complaint->status === Complaint::STATUS_VERIFIED, 422, 'Only verified complaints can be rated.');
+
+        // 🔒 Lock: if citizen has already submitted feedback, ratings are sealed
+        if ($complaint->engineer_rating && $complaint->feedback()->exists()) {
+            return response()->json([
+                'message' => 'Ratings are sealed — both the admin and citizen have already rated this complaint.',
+                'locked'  => true,
+            ], 423);
+        }
 
         $data = $request->validate([
             'rating'  => ['required', 'integer', 'min:1', 'max:5'],
