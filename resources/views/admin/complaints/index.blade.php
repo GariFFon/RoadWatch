@@ -438,13 +438,13 @@ async function openDetail(id) {
         const after  = (c.media??[]).filter(m=>m.stage==='after');
 
         const renderMedia = items => items.length ? items.map(m => m.file_type==='video'
-            ? `<div class="so-media-thumb" title="${esc(m.original_name??'')}">
-                   <video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;" muted playsinline
+            ? `<a href="${esc(m.cloud_url)}" target="_blank" class="so-media-thumb" title="${esc(m.original_name??'')}">
+                   <video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;" muted playsinline
                           onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>
                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
                        <span style="background:rgba(0,0,0,.55);color:#fff;border-radius:9999px;padding:.2rem .5rem;font-size:.65rem;font-weight:700;">▶ VIDEO</span>
                    </div>
-               </div>`
+               </a>`
             : `<a href="${esc(m.cloud_url)}" target="_blank" class="so-media-thumb" title="${esc(m.original_name??'')}">
                    <img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
                </a>`
