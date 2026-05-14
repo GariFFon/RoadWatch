@@ -99,14 +99,14 @@
             {{-- Media gallery --}}
             <div id="so-media-section" style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;padding:1.125rem;box-shadow:0 1px 3px rgba(0,0,0,.05);">
                 <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .875rem;">📎 Media Attachments</p>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
                     <div>
-                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .5rem;">📸 Before (Citizen)</p>
-                        <div id="so-before" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;"></div>
+                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .625rem;">📸 Before (Citizen)</p>
+                        <div id="so-before" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;"></div>
                     </div>
                     <div>
-                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .5rem;">✅ After (Engineer Work)</p>
-                        <div id="so-after" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;"></div>
+                        <p style="font-size:.72rem;font-weight:600;color:#6b7280;margin:0 0 .625rem;">✅ After (Engineer Work)</p>
+                        <div id="so-after" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;"></div>
                     </div>
                 </div>
             </div>
@@ -161,7 +161,7 @@
 .so-stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:.875rem;padding:.875rem 1rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .so-meta-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f9fafb;font-size:.8125rem;}
 .so-meta-row:last-child{border-bottom:none;}
-.so-media-thumb{aspect-ratio:1;border-radius:.625rem;overflow:hidden;border:1px solid #e5e7eb;background:#f3f4f6;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.so-media-thumb{aspect-ratio:1;border-radius:.625rem;overflow:hidden;border:1px solid #e5e7eb;background:#f3f4f6;cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;display:block;width:100%;}
 .so-media-thumb:hover{transform:scale(1.03);box-shadow:0 4px 12px rgba(0,0,0,.12);}
 </style>
 
@@ -448,7 +448,7 @@ async function openDetail(id) {
             : `<a href="${esc(m.cloud_url)}" target="_blank" class="so-media-thumb" title="${esc(m.original_name??'')}">
                    <img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
                </a>`
-        ).map(h=>`<div style="position:relative;">${h}</div>`).join('')
+        ).join('')
         : `<div style="aspect-ratio:1;border-radius:.625rem;background:#f9fafb;border:1.5px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.25rem;">
                <span style="font-size:1.5rem;opacity:.4;">📷</span>
                <span style="font-size:.65rem;color:#9ca3af;">No media</span>
