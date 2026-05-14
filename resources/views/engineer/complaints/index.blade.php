@@ -186,6 +186,9 @@ async function loadComplaints() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { loadFilters(); loadComplaints(); });
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadFilters();   // wait for dropdown to be populated first
+    loadComplaints();      // then fetch — select.value is now "" not "Loading…"
+});
 </script>
 @endsection
