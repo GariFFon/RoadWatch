@@ -26,8 +26,18 @@ class ComplaintResource extends JsonResource
             'created_at'       => $this->created_at->toIso8601String(),
             'updated_at'       => $this->updated_at->toIso8601String(),
 
-            // Valid status transitions from the current status (empty array = terminal state)
-            'next_statuses'    => \App\Models\Complaint::VALID_TRANSITIONS[$this->status] ?? [],
+            // Valid status transitions — role-scoped:
+            // awaiting_verification → {verified, in_progress, rejected} are ADMIN-only.
+            // Engineers see an empty array when status = awaiting_verification (read-only, waiting for admin).
+            'next_statuses' => (function () use ($request) {
+                $allTransitions = \App\Models\Complaint::VALID_TRANSITIONS[$this->status] ?? [];
+                $user = $request->user();
+                // If an engineer is viewing and status is awaiting_verification → no engineer actions
+                if ($user && $user->hasRole('engineer') && $this->status === \App\Models\Complaint::STATUS_AWAITING_VERIFICATION) {
+                    return [];
+                }
+                return $allTransitions;
+            })(),
 
             // Related
             'category'         => $this->whenLoaded('category', fn() => [

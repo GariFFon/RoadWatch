@@ -53,8 +53,15 @@ class ComplaintController extends Controller
             ], 422);
         }
 
-        // Engineers can only move to awaiting_verification from in_progress — not jump to verified/rejected
-        $engineerAllowed = [Complaint::STATUS_AWAITING_VERIFICATION, Complaint::STATUS_IN_PROGRESS, Complaint::STATUS_UNDER_REVIEW];
+        // Block engineer actions entirely when awaiting admin review
+        if ($complaint->status === Complaint::STATUS_AWAITING_VERIFICATION) {
+            return response()->json([
+                'message' => 'This complaint is awaiting admin verification. No engineer actions are permitted until the admin responds.',
+            ], 403);
+        }
+
+        // Engineers may only move to these statuses (never verified/rejected — admin-only)
+        $engineerAllowed = [Complaint::STATUS_AWAITING_VERIFICATION, Complaint::STATUS_IN_PROGRESS, Complaint::STATUS_UNDER_REVIEW, Complaint::STATUS_REJECTED];
         if (!in_array($data['status'], $engineerAllowed)) {
             return response()->json(['message' => 'Engineers are not permitted to set this status.'], 403);
         }

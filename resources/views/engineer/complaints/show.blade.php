@@ -98,7 +98,19 @@
                 <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:.25rem;">📤 Upload Work Evidence</h2>
                 <p style="font-size:.78rem;color:#9ca3af;margin-bottom:1rem;">Photos/videos after completing the work. Admin will review these before marking resolved.</p>
 
-                {{-- Drop zone --}}
+                {{-- Uploaded files strip (shown when files exist) --}}
+                <div id="uploaded-strip" style="display:none;">
+                    <div id="strip-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.5rem;margin-bottom:.75rem;"></div>
+                    <button onclick="toggleAddMore()" id="add-more-btn"
+                            style="width:100%;background:#f0f9ff;border:1.5px dashed #7dd3fc;border-radius:.625rem;
+                                   padding:.5rem;font-size:.8125rem;font-weight:600;color:#0284c7;cursor:pointer;
+                                   display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .15s;"
+                            onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
+                        ➕ Add Photos / Videos
+                    </button>
+                </div>
+
+                {{-- Drop zone (shown when no files, or add-more clicked) --}}
                 <div id="drop-zone"
                      style="border:2px dashed #e5e7eb;border-radius:.875rem;padding:1.5rem;text-align:center;
                             cursor:pointer;transition:all .2s;background:#fafafa;"
@@ -112,7 +124,7 @@
                 </div>
                 <input type="file" id="file-input" multiple accept="image/*,video/*" style="display:none;" onchange="handleFiles(this.files)">
 
-                {{-- Preview grid --}}
+                {{-- Preview grid (new files pending upload) --}}
                 <div id="preview-grid" style="display:none;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem;"></div>
 
                 {{-- Upload btn --}}
@@ -535,6 +547,50 @@ function renderAfterMedia(items, allowDelete = true) {
     if (!items.length) { el.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     el.innerHTML = items.map(m => mediaThumb(m, allowDelete)).join('');
+
+    // ── Upload card: compact strip mode when files already exist ──
+    const strip     = document.getElementById('uploaded-strip');
+    const dropZone  = document.getElementById('drop-zone');
+    if (!strip || !dropZone) return;
+
+    if (allowDelete) { // only when engineer can still modify (not read-only)
+        // Build mini thumbnail strip inside upload card
+        const stripGrid = document.getElementById('strip-grid');
+        stripGrid.innerHTML = items.map(m => {
+            const isVid = m.file_type === 'video';
+            return `<div style="aspect-ratio:1;border-radius:.625rem;overflow:hidden;background:#000;position:relative;"
+                         title="${esc(m.original_name ?? '')}">
+                ${isVid
+                    ? `<video src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;"></video>
+                       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                                   background:rgba(0,0,0,.35);pointer-events:none;">
+                           <span style="font-size:1.25rem;">▶</span></div>`
+                    : `<img src="${esc(m.cloud_url)}" style="width:100%;height:100%;object-fit:cover;">`}
+                <button onclick="deleteEvidence(${m.id},this)"
+                        style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);border:none;
+                               color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;
+                               font-size:.65rem;display:flex;align-items:center;justify-content:center;
+                               line-height:1;">✕</button>
+            </div>`;
+        }).join('');
+        strip.style.display    = 'block';
+        dropZone.style.display = 'none';   // hide big drop zone
+    } else {
+        strip.style.display    = 'none';
+        dropZone.style.display = 'none';   // verified — upload card hidden by parent
+    }
+}
+
+// Toggle add-more drop zone visibility
+function toggleAddMore() {
+    const dz  = document.getElementById('drop-zone');
+    const btn = document.getElementById('add-more-btn');
+    const showing = dz.style.display !== 'none';
+    dz.style.display  = showing ? 'none' : 'block';
+    btn.textContent   = showing ? '➕ Add Photos / Videos' : '✖ Cancel';
+    btn.style.background = showing ? '#f0f9ff' : '#fef2f2';
+    btn.style.borderColor = showing ? '#7dd3fc' : '#fca5a5';
+    btn.style.color       = showing ? '#0284c7' : '#dc2626';
 }
 
 async function deleteEvidence(mediaId, btn) {
