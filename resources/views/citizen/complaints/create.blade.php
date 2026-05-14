@@ -6,11 +6,22 @@
 <div style="max-width: 720px; margin: 0 auto;">
 
     {{-- Header --}}
-    <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0;">🚨 Report a Road Issue</h1>
-        <p style="margin-top: 0.25rem; font-size: 0.875rem; color: #6b7280;">
-            Fill in the details below. Your complaint will be reviewed by our team within 24 hours.
-        </p>
+    <div style="margin-bottom: 2rem; display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <div>
+            <h1 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0;">🚨 Report a Road Issue</h1>
+            <p style="margin-top: 0.25rem; font-size: 0.875rem; color: #6b7280;">
+                Fill in the details below. Your complaint will be reviewed by our team within 24 hours.
+            </p>
+            <p id="draft-notice" style="display:none;font-size:.78rem;color:#4f46e5;margin-top:.3rem;font-weight:600;">✏️ Draft restored — your previous progress has been loaded.</p>
+        </div>
+        <button type="button" onclick="resetDraft()"
+                style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;background:#fef2f2;
+                       border:1.5px solid #fca5a5;border-radius:.625rem;padding:.45rem 1rem;
+                       font-size:.8125rem;font-weight:600;color:#dc2626;cursor:pointer;
+                       transition:background .15s;white-space:nowrap;"
+                onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+            🗑 Reset Form
+        </button>
     </div>
 
     {{-- API error banner (shown by JS) --}}
@@ -360,7 +371,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const res = await axios.post('/api/v1/citizen/complaints', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            // Redirect to complaints list with success snackbar
+            // Clear draft and redirect
+            localStorage.removeItem('rw_complaint_draft');
             window.location.href = '/citizen/complaints?filed=1';
 
         } catch (err) {
@@ -385,6 +397,110 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+    // ── 7. Draft persistence (localStorage) ────────────────────────────────
+    const DRAFT_KEY = 'rw_complaint_draft';
+    const TEXT_FIELDS = ['title','description','location'];
+
+    function saveDraft() {
+        const draft = {
+            title:       document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            location:    document.getElementById('location').value,
+            latitude:    document.getElementById('latitude').value,
+            longitude:   document.getElementById('longitude').value,
+            category_id: document.getElementById('category_id').value,
+            severity:    document.getElementById('severity_value').value,
+            is_anonymous:document.getElementById('is_anonymous').checked,
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
+
+    // Auto-save on any text/checkbox change
+    TEXT_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', saveDraft);
+    });
+    document.getElementById('is_anonymous').addEventListener('change', saveDraft);
+
+    // Restore draft after categories & severity have rendered
+    function restoreDraft() {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        try {
+            const d = JSON.parse(raw);
+            if (d.title)       document.getElementById('title').value       = d.title;
+            if (d.description) document.getElementById('description').value = d.description;
+            if (d.location)    document.getElementById('location').value    = d.location;
+            if (d.is_anonymous) document.getElementById('is_anonymous').checked = true;
+
+            // Restore map pin
+            if (d.latitude && d.longitude) {
+                const lat = parseFloat(d.latitude), lng = parseFloat(d.longitude);
+                setPin(lat, lng);
+                map.setView([lat, lng], 15);
+            }
+
+            // Restore category selection
+            if (d.category_id) {
+                document.getElementById('category_id').value = d.category_id;
+                const radio = document.querySelector(`.cat-radio[value="${d.category_id}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    const card = radio.closest('label')?.querySelector('.cat-card');
+                    if (card) selectCategory(card);
+                }
+            }
+
+            // Restore severity selection
+            if (d.severity) {
+                const sevRadio = document.querySelector(`.sev-radio[value="${d.severity}"]`);
+                if (sevRadio) {
+                    sevRadio.checked = true;
+                    const card = sevRadio.closest('label')?.querySelector('.sev-card');
+                    if (card) selectSeverity(card);
+                }
+            }
+
+            // Show draft notice only if something was saved
+            if (d.title || d.description || d.location || d.category_id) {
+                document.getElementById('draft-notice').style.display = 'block';
+            }
+        } catch(_) { localStorage.removeItem(DRAFT_KEY); }
+    }
+
+    // Wait for categories + severity to load before restoring
+    Promise.allSettled([
+        axios.get('/api/v1/categories'),
+        fetch('/api/v1/complaint-options').then(r => r.json())
+    ]).then(() => setTimeout(restoreDraft, 150));
+
+    window.resetDraft = function() {
+        if (!confirm('Reset the form? All entered data will be cleared.')) return;
+        localStorage.removeItem(DRAFT_KEY);
+        document.getElementById('complaint-form').reset();
+        document.getElementById('category_id').value  = '';
+        document.getElementById('severity_value').value = 'medium';
+        document.getElementById('latitude').value  = '';
+        document.getElementById('longitude').value = '';
+        document.getElementById('coords-display').textContent = 'No location selected yet — use the map above';
+        if (window._marker) { map.removeLayer(window._marker); window._marker = null; }
+        document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('cat-selected'));
+        document.querySelectorAll('.sev-card').forEach(c => {
+            c.classList.remove('sev-selected');
+            c.style.background = '#fff'; c.style.borderColor = '#e5e7eb'; c.style.color = '#374151';
+        });
+        document.getElementById('image-previews').innerHTML = '';
+        document.getElementById('video-names').innerHTML    = '';
+        document.getElementById('draft-notice').style.display = 'none';
+        // Select default medium severity visually
+        const medCard = document.querySelector('.sev-radio[value="medium"]');
+        if (medCard) { medCard.checked = true; const c = medCard.closest('label')?.querySelector('.sev-card'); if(c) selectSeverity(c); }
+    };
+
+    // Also save map pin coordinates when set
+    const _origSetPin = window.setPin;
+    map.on('click', () => setTimeout(saveDraft, 50));
+    document.getElementById('gps-btn').addEventListener('click', () => setTimeout(saveDraft, 2000));
 });
 </script>
 @endsection
