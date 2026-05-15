@@ -1,85 +1,61 @@
 <x-guest-layout>
-    <div class="mb-6 text-center">
-        {{-- Google avatar --}}
-        @if(auth()->user()->google_avatar)
-            <img
-                src="{{ auth()->user()->google_avatar }}"
-                alt="{{ auth()->user()->name }}"
-                class="mx-auto mb-4 h-16 w-16 rounded-full border-2 border-indigo-500 shadow"
-            >
-        @endif
 
-        <h1 class="text-xl font-bold text-gray-800">
-            One last step, {{ auth()->user()->name }}!
-        </h1>
-        <p class="mt-1 text-sm text-gray-500">
-            Set a password so you can also log in with your email.
-        </p>
+    {{-- Avatar + heading --}}
+    <div style="text-align:center;margin-bottom:1.5rem;">
+        @if(auth()->user()->google_avatar)
+            <img src="{{ auth()->user()->google_avatar }}"
+                 alt="{{ auth()->user()->name }}"
+                 style="width:64px;height:64px;border-radius:50%;border:3px solid #6366f1;box-shadow:0 4px 14px rgba(99,102,241,.3);margin:0 auto .875rem;display:block;">
+        @endif
+        <h1 style="font-size:1.25rem;font-weight:800;color:#111827;">One last step, {{ auth()->user()->name }}!</h1>
+        <p style="font-size:.875rem;color:#6b7280;margin-top:.375rem;">Set a password so you can also sign in with your email.</p>
     </div>
 
-    {{-- Flash messages --}}
+    {{-- Flash info --}}
     @if(session('info'))
-        <div class="mb-4 rounded-lg bg-indigo-600 p-3 text-sm font-medium text-white shadow-sm">
-            ℹ️ {{ session('info') }}
-        </div>
+        <div class="rw-alert-info">ℹ️ {{ session('info') }}</div>
     @endif
+
+    {{-- Signed-in as banner --}}
+    <div style="background:#1e1b4b;border-radius:.625rem;padding:.75rem 1rem;font-size:.8125rem;color:#a5b4fc;margin-bottom:1.25rem;">
+        Signing in as <strong style="color:#c7d2fe;">{{ auth()->user()->email }}</strong>
+    </div>
 
     <form method="POST" action="{{ route('password.setup.store') }}">
         @csrf
 
-        {{-- Email (read-only, for context) --}}
-        <div class="mb-4 rounded-lg bg-gray-800 px-4 py-3 text-sm text-white shadow-sm">
-            Signing in as <span class="font-semibold text-indigo-300">{{ auth()->user()->email }}</span>
+        <div class="rw-field">
+            <label for="password">Set a Password</label>
+            <input id="password" type="password" name="password"
+                   required autocomplete="new-password" placeholder="Min 8 chars, uppercase, number">
+            <p class="rw-hint">Min 8 characters · uppercase · lowercase · number</p>
+            @error('password') <p class="rw-error">{{ $message }}</p> @enderror
         </div>
 
-        {{-- New Password --}}
-        <div>
-            <x-input-label for="password" :value="__('Set a Password')" />
-            <x-text-input
-                id="password"
-                name="password"
-                type="password"
-                class="mt-1 block w-full"
-                required
-                autocomplete="new-password"
-            />
-            <p class="mt-1 text-xs text-gray-400">
-                Min 8 characters · uppercase · lowercase · number
-            </p>
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        {{-- Confirm Password --}}
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-            <x-text-input
-                id="password_confirmation"
-                name="password_confirmation"
-                type="password"
-                class="mt-1 block w-full"
-                required
-                autocomplete="new-password"
-            />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div class="rw-field">
+            <label for="password_confirmation">Confirm Password</label>
+            <input id="password_confirmation" type="password" name="password_confirmation"
+                   required autocomplete="new-password" placeholder="Repeat your password">
+            @error('password_confirmation') <p class="rw-error">{{ $message }}</p> @enderror
         </div>
 
         {{-- Why this matters --}}
-        <div class="mt-4 rounded-lg bg-amber-500 p-3 text-xs font-medium text-white shadow-sm">
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:.625rem;padding:.75rem 1rem;font-size:.8125rem;color:#92400e;margin-bottom:1.25rem;">
             🔒 Setting a password lets you log in with email too, and keeps your account secure if you ever lose access to Google.
         </div>
 
-        {{-- Submit --}}
-        <div class="mt-6 flex items-center justify-between">
-            <form method="POST" action="{{ route('logout') }}" class="inline">
+        <div class="rw-flex-between">
+            <form method="POST" action="{{ route('logout') }}" style="display:inline;">
                 @csrf
-                <button type="submit" class="text-sm text-gray-500 hover:text-gray-700 underline">
+                <button type="submit" style="background:none;border:none;font-size:.875rem;color:#6b7280;cursor:pointer;text-decoration:underline;font-family:inherit;">
                     Not you? Sign out
                 </button>
             </form>
 
-            <x-primary-button>
-                {{ __('Save Password & Continue') }}
-            </x-primary-button>
+            <button type="submit" class="rw-btn-primary">
+                Save Password & Continue →
+            </button>
         </div>
     </form>
+
 </x-guest-layout>

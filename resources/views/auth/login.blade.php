@@ -1,23 +1,22 @@
 <x-guest-layout>
 
-    {{-- Session / error alerts --}}
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    @if ($errors->has('google'))
-        <div style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:.75rem 1rem;border-radius:.5rem;font-size:.875rem;margin-bottom:1rem;">
-            {{ $errors->first('google') }}
-        </div>
+    {{-- Session status --}}
+    @if (session('status'))
+        <div class="rw-alert-success">{{ session('status') }}</div>
     @endif
 
-    {{-- ── Google OAuth button ─────────────────────────────── --}}
-    <a href="{{ route('auth.google') }}"
-       style="display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:.625rem 1rem;
-              border:1.5px solid #e5e7eb;border-radius:.5rem;background:#fff;color:#374151;
-              font-size:.9375rem;font-weight:600;text-decoration:none;transition:all .2s;
-              box-shadow:0 1px 3px rgba(0,0,0,.06);"
-       onmouseover="this.style.background='#f9fafb';this.style.borderColor='#d1d5db';this.style.boxShadow='0 2px 6px rgba(0,0,0,.1)';"
-       onmouseout="this.style.background='#fff';this.style.borderColor='#e5e7eb';this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';">
-        {{-- Google G logo SVG --}}
+    @if ($errors->has('google'))
+        <div class="rw-alert-error">{{ $errors->first('google') }}</div>
+    @endif
+
+    {{-- Page heading --}}
+    <div style="text-align:center;margin-bottom:1.5rem;">
+        <h1 style="font-size:1.375rem;font-weight:800;color:#111827;letter-spacing:-.02em;">Welcome back</h1>
+        <p style="font-size:.875rem;color:#6b7280;margin-top:.25rem;">Sign in to your RoadWatch account</p>
+    </div>
+
+    {{-- Google OAuth --}}
+    <a href="{{ route('auth.google') }}" class="rw-google-btn">
         <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
             <path fill="#EA4335" d="M24 9.5c3.2 0 6 1.1 8.2 3.2l6.1-6.1C34.5 3.1 29.6 1 24 1 14.9 1 7.2 6.4 3.7 14.1l7.2 5.6C12.6 13.3 17.8 9.5 24 9.5z"/>
             <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.2-9.9 6.2-16.9z"/>
@@ -27,67 +26,46 @@
         Continue with Google
     </a>
 
-    {{-- ── Divider ─────────────────────────────────────────── --}}
-    <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;">
-        <div style="flex:1;height:1px;background:#e5e7eb;"></div>
-        <span style="font-size:.8125rem;color:#9ca3af;font-weight:500;">or sign in with email</span>
-        <div style="flex:1;height:1px;background:#e5e7eb;"></div>
-    </div>
+    <div class="rw-divider"><span>or sign in with email</span></div>
 
-    {{-- ── Email / Password form ───────────────────────────── --}}
+    {{-- Email / Password form --}}
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email"
-                          :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="rw-field">
+            <label for="email">Email Address</label>
+            <input id="email" type="email" name="email" value="{{ old('email') }}"
+                   required autofocus autocomplete="username" placeholder="you@example.com">
+            @error('email') <p class="rw-error">{{ $message }}</p> @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full"
-                          type="password" name="password"
-                          required autocomplete="current-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="rw-field">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.375rem;">
+                <label for="password" style="margin-bottom:0;">Password</label>
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="rw-link" style="font-size:.78rem;">Forgot password?</a>
+                @endif
+            </div>
+            <input id="password" type="password" name="password"
+                   required autocomplete="current-password" placeholder="••••••••">
+            @error('password') <p class="rw-error">{{ $message }}</p> @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox"
-                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                       name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <div style="margin-bottom:1.25rem;">
+            <label class="rw-remember">
+                <input id="remember_me" type="checkbox" name="remember">
+                <span>Remember me for 30 days</span>
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                   href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="rw-btn-primary" style="width:100%;">
+            Sign in →
+        </button>
     </form>
 
-    {{-- ── Register link ───────────────────────────────────── --}}
-    <p style="text-align:center;font-size:.8125rem;color:#6b7280;margin-top:1.25rem;">
+    <p class="rw-form-footer">
         Don't have an account?
-        <a href="{{ route('register') }}"
-           style="color:#4f46e5;font-weight:600;text-decoration:none;"
-           onmouseover="this.style.textDecoration='underline'"
-           onmouseout="this.style.textDecoration='none'">
-            Create one
-        </a>
+        <a href="{{ route('register') }}" class="rw-link">Create one</a>
     </p>
 
 </x-guest-layout>
