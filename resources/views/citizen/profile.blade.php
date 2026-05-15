@@ -16,24 +16,28 @@
     {{-- ── Hero card ── --}}
     <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:1.5rem;
                 overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:1.5rem;">
-        {{-- Cover strip (clickable to change banner) --}}
-        <div id="profile-banner-area"
+
+        {{-- Banner (click = lightbox, pencil = upload) --}}
+        <div id="profile-banner-area" data-src=""
              style="height:130px;background:linear-gradient(135deg,#4f46e5,#7c3aed,#a855f7);
-                    position:relative;cursor:pointer;"
-             onclick="puTriggerBanner()">
+                    position:relative;cursor:zoom-in;"
+             onclick="puOpenLightbox(this.dataset.src)">
             <div id="pu-banner-spinner" class="pu-spinner"
                  style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
-            <button class="pu-btn pu-overlay-banner" onclick="event.stopPropagation();puTriggerBanner()"
-                    style="position:absolute;bottom:.5rem;right:.75rem;border-radius:.5rem;
-                           padding:.35rem .75rem;font-size:.72rem;gap:.35rem;">
-                📷 Edit Cover
+            {{-- Pencil button — click uploads, does NOT open lightbox --}}
+            <button class="pu-btn pu-pencil-banner"
+                    onclick="event.stopPropagation();puTriggerBanner()"
+                    title="Change cover photo">
+                <div id="pu-banner-spinner" class="pu-spinner"></div>
+                ✏️ Edit Cover
             </button>
         </div>
 
         {{-- Avatar + info --}}
         <div style="padding:0 1.75rem 1.75rem;position:relative;">
-            {{-- Avatar (with edit overlay) --}}
-            <div id="avatar-wrap" style="margin-top:-50px;margin-bottom:1rem;display:inline-block;position:relative;">
+            {{-- Avatar --}}
+            <div id="avatar-wrap"
+                 style="margin-top:-50px;margin-bottom:1rem;display:inline-block;position:relative;">
                 {{-- JS fills this in --}}
             </div>
 
@@ -49,6 +53,7 @@
             </div>
         </div>
     </div>
+
 
     {{-- ── Stats row ── --}}
     <div id="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;"></div>
@@ -119,33 +124,38 @@ async function loadProfile() {
         const meta       = cRes.data.meta ?? {};
 
         // ── Banner --
-        if (u.profile_banner_url) {
-            const ba = document.getElementById('profile-banner-area');
-            if (ba) {
-                ba.style.backgroundImage    = `url('${esc(u.profile_banner_url)}')`;
-                ba.style.backgroundSize     = 'cover';
-                ba.style.backgroundPosition = 'center';
-            }
+        const ba = document.getElementById('profile-banner-area');
+        if (ba && u.profile_banner_url) {
+            ba.style.backgroundImage    = `url('${esc(u.profile_banner_url)}')`;
+            ba.style.backgroundSize     = 'cover';
+            ba.style.backgroundPosition = 'center';
+            ba.style.cursor             = 'zoom-in';
+            ba.dataset.src              = u.profile_banner_url;
         }
 
-        // ── Avatar --
+        // ── Avatar (click = lightbox, pencil badge = upload) --
         const avatarWrap = document.getElementById('avatar-wrap');
-        const avatarInner = u.profile_photo_url
-            ? `<img src="${esc(u.profile_photo_url)}" alt="avatar"
+        const photoUrl   = u.profile_photo_url || '';
+        const initials   = (u.name ?? 'U')[0].toUpperCase();
+
+        const avatarContent = photoUrl
+            ? `<img src="${esc(photoUrl)}" data-src="${esc(photoUrl)}" alt="avatar"
+                    onclick="puOpenLightbox(this.dataset.src)"
                     style="width:98px;height:98px;border-radius:50%;object-fit:cover;
-                           border:4px solid #fff;box-sizing:border-box;box-shadow:0 4px 16px rgba(0,0,0,.12);display:block;">`
+                           border:4px solid #fff;box-sizing:border-box;
+                           box-shadow:0 4px 16px rgba(0,0,0,.12);display:block;cursor:zoom-in;">`
             : `<div style="width:98px;height:98px;border-radius:50%;box-sizing:border-box;
                    background:linear-gradient(135deg,#4f46e5,#7c3aed);
                    border:4px solid #fff;box-shadow:0 4px 16px rgba(79,70,229,.25);
                    display:flex;align-items:center;justify-content:center;
-                   font-size:2.25rem;font-weight:800;color:#fff;">${(u.name??'U')[0].toUpperCase()}</div>`;
+                   font-size:2.25rem;font-weight:800;color:#fff;">${initials}</div>`;
+
         avatarWrap.innerHTML = `
-            <div style="position:relative;display:inline-block;width:98px;height:98px;border-radius:50%;overflow:hidden;">
-                ${avatarInner}
-                <button class="pu-btn pu-overlay-avatar" onclick="puTriggerPhoto()"
-                        style="width:98px;height:98px;top:0;left:0;border-radius:50%;">
+            <div style="position:relative;display:inline-block;width:98px;height:98px;">
+                ${avatarContent}
+                <button class="pu-btn pu-pencil-avatar" onclick="puTriggerPhoto()" title="Change profile photo">
                     <div id="pu-avatar-spinner" class="pu-spinner"></div>
-                    <span style="font-size:1.25rem;">📷</span>
+                    ✏️
                 </button>
             </div>`;
 
