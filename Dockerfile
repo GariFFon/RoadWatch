@@ -42,11 +42,10 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
 # Storage permissions
 RUN chmod -R 775 storage bootstrap/cache
 
+# Copy and use startup script
+COPY docker-start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
 EXPOSE $PORT
 
-CMD php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan storage:link \
-    && php artisan migrate --force \
-    && php artisan db:seed --class=CategorySeeder --force \
-    && php artisan serve --host=0.0.0.0 --port=$PORT
+CMD ["/usr/local/bin/start.sh"]
