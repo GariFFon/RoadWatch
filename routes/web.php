@@ -48,6 +48,7 @@ Route::middleware(['auth', 'password.setup'])->group(function () {
         Route::get('complaints',                fn() => view('engineer.complaints.index'))    ->name('complaints.index');
         Route::get('complaints/completed',      fn() => view('engineer.complaints.completed'))->name('complaints.completed');
         Route::get('complaints/{complaint}',    fn() => view('engineer.complaints.show'))     ->name('complaints.show');
+        Route::get('profile',                   fn() => view('engineer.profile'))             ->name('profile');
     });
 
     // ── Admin panel ────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'password.setup'])->group(function () {
         Route::get('complaints',  fn() => view('admin.complaints.index'))   ->name('complaints.index');
         Route::get('users',       fn() => view('admin.users.index'))        ->name('users.index');
         Route::get('categories',  fn() => view('admin.categories.index'))   ->name('categories.index');
+        Route::get('profile',     fn() => view('admin.profile'))            ->name('profile');
     });
 });
 

@@ -165,8 +165,17 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
                     </div>
                 </div>
 
-                {{-- Sign Out --}}
+                {{-- My Profile + Sign Out --}}
                 <div style="padding:.5rem;">
+                    <a href="{{ route('admin.profile') }}"
+                       style="width:100%;display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
+                              background:none;border-radius:.5rem;font-size:.8125rem;
+                              font-weight:600;color:#374151;cursor:pointer;text-decoration:none;
+                              transition:background .15s;"
+                       onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">
+                        👤 My Profile
+                    </a>
+                    <div style="height:1px;background:#f3f4f6;margin:.25rem 0;"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
