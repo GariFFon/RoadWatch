@@ -1,8 +1,12 @@
 {
-    "providers": [
-        "php"
-    ],
-    "packages": {
-        "php": "8.4"
-    }
+  "providers": ["php"],
+
+  "packages": {
+    "php": "8.4"
+  },
+
+  "buildAptPackages": [
+    "bison",
+    "re2c"
+  ]
 }
