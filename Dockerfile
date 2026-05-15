@@ -48,7 +48,6 @@ RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE $PORT
 
-CMD php artisan view:cache \
-    && php artisan migrate --force \
+CMD php artisan migrate --force \
     && php artisan db:seed --class=CategorySeeder --force \
     && php artisan serve --host=0.0.0.0 --port=$PORT
