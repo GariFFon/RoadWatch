@@ -7,7 +7,7 @@
     <title>@yield('title', 'RoadWatch')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; }
@@ -222,5 +222,7 @@
         @yield('content')
     </main>
 
+    @vite(['resources/js/app.js'])
+    @stack('scripts')
 </body>
 </html>
