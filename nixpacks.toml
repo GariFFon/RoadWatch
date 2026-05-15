@@ -1,5 +1,6 @@
 [variables]
 PHP_VERSION = "8.4"
+COMPOSER_ALLOW_SUPERUSER = "1"
 
 [phases.setup]
 nixPkgs = [
