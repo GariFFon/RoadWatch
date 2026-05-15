@@ -2,7 +2,7 @@ FROM php:8.4-cli
 
 WORKDIR /var/www/html
 
-# System dependencies
+# System dependencies + Node.js 22.x
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     zip \
     unzip \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions — no GD needed (images go to S3)
@@ -38,6 +40,9 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --optimize-autoloader \
     --no-interaction \
     --no-scripts
+
+# Build frontend assets (generates public/build/manifest.json)
+RUN npm install && npm run build
 
 # Storage permissions
 RUN chmod -R 775 storage bootstrap/cache
