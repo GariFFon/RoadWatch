@@ -47,6 +47,12 @@ class ComplaintController extends Controller
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
 
+        if ($complaint->status === $data['status']) {
+            return response()->json([
+                'message' => "The complaint is already in [{$data['status']}] status. Please refresh the page.",
+            ], 422);
+        }
+
         if (!$complaint->canTransitionTo($data['status'])) {
             return response()->json([
                 'message' => "Cannot transition from [{$complaint->status}] to [{$data['status']}].",

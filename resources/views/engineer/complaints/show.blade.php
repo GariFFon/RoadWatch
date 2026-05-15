@@ -546,7 +546,16 @@ async function executeUpdate() {
         closeConfirm();
         loadDetail(); // refresh page data
     } catch(e) {
-        document.getElementById('confirm-error').textContent = e.response?.data?.message ?? 'Update failed.';
+        const msg = e.response?.data?.message ?? 'Update failed.';
+        // If the complaint status changed since page load, reload to get fresh data
+        if (msg.includes('Cannot transition') && msg.includes(pendingNewStatus) &&
+            msg.startsWith(`Cannot transition from [${pendingNewStatus}]`) ||
+            msg.includes('already in')) {
+            closeConfirm();
+            loadDetail(); // reload — status was already updated (stale page data)
+            return;
+        }
+        document.getElementById('confirm-error').textContent = msg;
         document.getElementById('confirm-error').style.display = 'block';
         btn.disabled = false; btn.textContent = 'Confirm Update';
     }
