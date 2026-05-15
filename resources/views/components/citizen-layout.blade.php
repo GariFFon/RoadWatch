@@ -1,5 +1,1 @@
-@props(['title' => null])
-
-<x-layouts.citizen :title="$title ?? null">
-    {{ $slot }}
-</x-layouts.citizen>
+{{-- This component is a placeholder. Citizen views use @extends('layouts.citizen') directly. --}}
