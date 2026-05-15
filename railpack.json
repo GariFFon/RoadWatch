@@ -1,6 +1,9 @@
 {
   "providers": ["php", "node"],
   "php": {
-    "version": "8.4"
+    "version": "8.4.21"
+  },
+  "node": {
+    "version": "22.22.3"
   }
 }
