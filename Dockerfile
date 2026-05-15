@@ -10,24 +10,21 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
+    libicu-dev \
     zip \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP extensions needed by Laravel
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo_mysql \
-        mbstring \
-        exif \
-        pcntl \
-        bcmath \
-        gd \
-        zip \
-        intl \
-        opcache
+# PHP extensions — no GD needed (images go to S3)
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    zip \
+    intl \
+    opcache
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -35,7 +32,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy project files
 COPY . .
 
-# Install PHP dependencies (no dev, optimised)
+# Install PHP dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
@@ -48,8 +45,7 @@ RUN php artisan config:cache \
     && php artisan view:cache
 
 # Storage permissions
-RUN chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE $PORT
 
