@@ -18,16 +18,17 @@ class MeController extends Controller
 
         return response()->json([
             'data' => [
-                'id'                => $user->id,
-                'name'              => $user->name,
-                'email'             => $user->email,
-                'phone'             => $user->phone,
-                'role'              => $user->role,
-                'gender'            => $user->gender,
-                'profile_photo_url' => $user->profile_photo_url,
-                'auth_provider'     => $user->auth_provider,
-                'is_active'         => $user->is_active,
-                'created_at'        => $user->created_at->toIso8601String(),
+                'id'                 => $user->id,
+                'name'               => $user->name,
+                'email'              => $user->email,
+                'phone'              => $user->phone,
+                'role'               => $user->role,
+                'gender'             => $user->gender,
+                'profile_photo_url'  => $user->profile_photo_url,
+                'profile_banner_url' => $user->profile_banner_url,
+                'auth_provider'      => $user->auth_provider,
+                'is_active'          => $user->is_active,
+                'created_at'         => $user->created_at->toIso8601String(),
             ]
         ]);
     }

@@ -43,6 +43,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',
         'gender',
         'profile_photo',
+        'profile_banner_url',
         'address',
         'city',
         'state',
@@ -221,11 +222,15 @@ class User extends Authenticatable implements MustVerifyEmail
     // -------------------------------------------------------------------------
 
     /**
-     * Get full profile photo URL or default avatar.
+     * Get full profile photo URL — supports S3 URLs, local storage, Google avatar.
      */
-    public function getProfilePhotoUrlAttribute(): string
+    public function getProfilePhotoUrlAttribute(): ?string
     {
         if ($this->profile_photo) {
+            // If already a full URL (S3), return as-is
+            if (str_starts_with($this->profile_photo, 'http')) {
+                return $this->profile_photo;
+            }
             return asset('storage/' . $this->profile_photo);
         }
 
@@ -234,8 +239,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->google_avatar;
         }
 
-        // Fallback: generated letter avatar
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=3B82F6&color=fff';
+        return null; // frontend shows initials
     }
 
     // -------------------------------------------------------------------------

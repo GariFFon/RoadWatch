@@ -16,13 +16,26 @@
     {{-- ── Hero card ── --}}
     <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:1.5rem;
                 overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:1.5rem;">
-        {{-- Cover strip --}}
-        <div style="height:100px;background:linear-gradient(135deg,#4f46e5,#7c3aed,#a855f7);position:relative;"></div>
+        {{-- Cover strip (clickable to change banner) --}}
+        <div id="profile-banner-area"
+             style="height:130px;background:linear-gradient(135deg,#4f46e5,#7c3aed,#a855f7);
+                    position:relative;cursor:pointer;"
+             onclick="puTriggerBanner()">
+            <div id="pu-banner-spinner" class="pu-spinner"
+                 style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+            <button class="pu-btn pu-overlay-banner" onclick="event.stopPropagation();puTriggerBanner()"
+                    style="position:absolute;bottom:.5rem;right:.75rem;border-radius:.5rem;
+                           padding:.35rem .75rem;font-size:.72rem;gap:.35rem;">
+                📷 Edit Cover
+            </button>
+        </div>
 
         {{-- Avatar + info --}}
         <div style="padding:0 1.75rem 1.75rem;position:relative;">
-            {{-- Avatar (floated up) --}}
-            <div id="avatar-wrap" style="margin-top:-50px;margin-bottom:1rem;"></div>
+            {{-- Avatar (with edit overlay) --}}
+            <div id="avatar-wrap" style="margin-top:-50px;margin-bottom:1rem;display:inline-block;position:relative;">
+                {{-- JS fills this in --}}
+            </div>
 
             <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
                 <div>
@@ -33,14 +46,6 @@
                         <span id="p-provider-badge"></span>
                     </div>
                 </div>
-                <a href="{{ route('citizen.complaints.create') }}"
-                   style="display:inline-flex;align-items:center;gap:.5rem;background:#4f46e5;color:#fff;
-                          text-decoration:none;border-radius:.875rem;padding:.625rem 1.25rem;
-                          font-size:.875rem;font-weight:700;box-shadow:0 2px 10px rgba(79,70,229,.3);
-                          transition:background .15s;" onmouseover="this.style.background='#4338ca'"
-                   onmouseout="this.style.background='#4f46e5'">
-                    🚨 Report Issue
-                </a>
             </div>
         </div>
     </div>
@@ -113,20 +118,36 @@ async function loadProfile() {
         const complaints = cRes.data.data ?? [];
         const meta       = cRes.data.meta ?? {};
 
+        // ── Banner --
+        if (u.profile_banner_url) {
+            const ba = document.getElementById('profile-banner-area');
+            if (ba) {
+                ba.style.backgroundImage    = `url('${esc(u.profile_banner_url)}')`;
+                ba.style.backgroundSize     = 'cover';
+                ba.style.backgroundPosition = 'center';
+            }
+        }
+
         // ── Avatar --
         const avatarWrap = document.getElementById('avatar-wrap');
-        if (u.profile_photo_url) {
-            avatarWrap.innerHTML = `<img src="${esc(u.profile_photo_url)}" alt="avatar"
-                style="width:90px;height:90px;border-radius:50%;object-fit:cover;
-                       border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);">`;
-        } else {
-            const initial = (u.name ?? 'U')[0].toUpperCase();
-            avatarWrap.innerHTML = `<div style="width:90px;height:90px;border-radius:50%;
-                background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                border:4px solid #fff;box-shadow:0 4px 16px rgba(79,70,229,.25);
-                display:flex;align-items:center;justify-content:center;
-                font-size:2.25rem;font-weight:800;color:#fff;">${initial}</div>`;
-        }
+        const avatarInner = u.profile_photo_url
+            ? `<img src="${esc(u.profile_photo_url)}" alt="avatar"
+                    style="width:98px;height:98px;border-radius:50%;object-fit:cover;
+                           border:4px solid #fff;box-sizing:border-box;box-shadow:0 4px 16px rgba(0,0,0,.12);display:block;">`
+            : `<div style="width:98px;height:98px;border-radius:50%;box-sizing:border-box;
+                   background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                   border:4px solid #fff;box-shadow:0 4px 16px rgba(79,70,229,.25);
+                   display:flex;align-items:center;justify-content:center;
+                   font-size:2.25rem;font-weight:800;color:#fff;">${(u.name??'U')[0].toUpperCase()}</div>`;
+        avatarWrap.innerHTML = `
+            <div style="position:relative;display:inline-block;width:98px;height:98px;border-radius:50%;overflow:hidden;">
+                ${avatarInner}
+                <button class="pu-btn pu-overlay-avatar" onclick="puTriggerPhoto()"
+                        style="width:98px;height:98px;top:0;left:0;border-radius:50%;">
+                    <div id="pu-avatar-spinner" class="pu-spinner"></div>
+                    <span style="font-size:1.25rem;">📷</span>
+                </button>
+            </div>`;
 
         // ── Name / email / badges --
         document.getElementById('p-name').textContent  = u.name ?? '—';
@@ -216,5 +237,7 @@ async function loadProfile() {
 
 document.addEventListener('DOMContentLoaded', loadProfile);
 </script>
+
+@include('partials.profile-upload-ui')
 
 @endsection

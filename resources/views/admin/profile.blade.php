@@ -23,11 +23,22 @@
     <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:1.5rem;
                 overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:1.5rem;">
         {{-- Cover strip --}}
-        <div style="height:100px;background:linear-gradient(135deg,#4f46e5,#7c3aed,#9333ea);position:relative;"></div>
+        <div id="profile-banner-area"
+             style="height:130px;background:linear-gradient(135deg,#4f46e5,#7c3aed,#9333ea);
+                    position:relative;cursor:pointer;"
+             onclick="puTriggerBanner()">
+            <div id="pu-banner-spinner" class="pu-spinner"
+                 style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+            <button class="pu-btn pu-overlay-banner" onclick="event.stopPropagation();puTriggerBanner()"
+                    style="position:absolute;bottom:.5rem;right:.75rem;border-radius:.5rem;
+                           padding:.35rem .75rem;font-size:.72rem;gap:.35rem;">
+                📷 Edit Cover
+            </button>
+        </div>
 
         {{-- Avatar + info --}}
         <div style="padding:0 1.75rem 1.75rem;position:relative;">
-            <div id="ap-avatar-wrap" style="margin-top:-50px;margin-bottom:1rem;"></div>
+            <div id="ap-avatar-wrap" style="margin-top:-50px;margin-bottom:1rem;display:inline-block;position:relative;"></div>
 
             <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
                 <div>
@@ -119,20 +130,32 @@ async function loadProfile() {
         const all = cmpRes.data.data ?? [];
         const meta = cmpRes.data.meta ?? {};
 
+        // ── Banner
+        if (u.profile_banner_url) {
+            const ba = document.getElementById('profile-banner-area');
+            if (ba) { ba.style.backgroundImage = `url('${esc(u.profile_banner_url)}')`; ba.style.backgroundSize = 'cover'; ba.style.backgroundPosition = 'center'; }
+        }
+
         // ── Avatar
         const wrap = document.getElementById('ap-avatar-wrap');
-        if (u.profile_photo_url) {
-            wrap.innerHTML = `<img src="${esc(u.profile_photo_url)}" alt="avatar"
-                style="width:90px;height:90px;border-radius:50%;object-fit:cover;
-                       border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);">`;
-        } else {
-            const init = (u.name??'A')[0].toUpperCase();
-            wrap.innerHTML = `<div style="width:90px;height:90px;border-radius:50%;
-                background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                border:4px solid #fff;box-shadow:0 4px 16px rgba(79,70,229,.25);
-                display:flex;align-items:center;justify-content:center;
-                font-size:2.25rem;font-weight:800;color:#fff;">${init}</div>`;
-        }
+        const avatarInner = u.profile_photo_url
+            ? `<img src="${esc(u.profile_photo_url)}" alt="avatar"
+                    style="width:98px;height:98px;border-radius:50%;object-fit:cover;
+                           border:4px solid #fff;box-sizing:border-box;box-shadow:0 4px 16px rgba(0,0,0,.12);display:block;">`
+            : `<div style="width:98px;height:98px;border-radius:50%;box-sizing:border-box;
+                   background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                   border:4px solid #fff;box-shadow:0 4px 16px rgba(79,70,229,.25);
+                   display:flex;align-items:center;justify-content:center;
+                   font-size:2.25rem;font-weight:800;color:#fff;">${(u.name??'A')[0].toUpperCase()}</div>`;
+        wrap.innerHTML = `
+            <div style="position:relative;display:inline-block;width:98px;height:98px;border-radius:50%;overflow:hidden;">
+                ${avatarInner}
+                <button class="pu-btn pu-overlay-avatar" onclick="puTriggerPhoto()"
+                        style="width:98px;height:98px;top:0;left:0;border-radius:50%;">
+                    <div id="pu-avatar-spinner" class="pu-spinner"></div>
+                    <span style="font-size:1.25rem;">📷</span>
+                </button>
+            </div>`;
 
         document.getElementById('ap-name').textContent  = u.name ?? '—';
         document.getElementById('ap-email').textContent = u.email ?? '—';
@@ -213,5 +236,7 @@ async function loadProfile() {
 
 document.addEventListener('DOMContentLoaded', loadProfile);
 </script>
+
+@include('partials.profile-upload-ui')
 
 @endsection

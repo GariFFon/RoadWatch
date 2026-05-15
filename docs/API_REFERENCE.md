@@ -2,7 +2,7 @@
 
 **Base URL:** `http://localhost:8000/api/v1` (dev) · `https://yourdomain.com/api/v1` (prod)
 **Auth:** Laravel session cookie (`auth:web`) — axios sends `X-XSRF-TOKEN` automatically
-**API Version:** v1 · **Last updated:** 2026-05-14
+**API Version:** v1 · **Last updated:** 2026-05-16
 
 ---
 
@@ -11,14 +11,15 @@
 | # | Group | Endpoints |
 |---|-------|-----------|
 | 1 | [Public](#1-public) | Categories, Complaint Options |
-| 2 | [Auth](#2-auth--me) | Me (profile) |
-| 3 | [Citizen — Complaints](#3-citizen--complaints) | List, Create, Show, Delete |
-| 4 | [Citizen — Media](#4-citizen--media) | Upload, Delete |
-| 5 | [Citizen — Feedback](#5-citizen--feedback) | Submit rating |
-| 6 | [Engineer — Complaints](#6-engineer--complaints) | List, Show, Update status |
-| 7 | [Engineer — Media](#7-engineer--media) ⭐ | Upload evidence, Delete evidence |
-| 8 | [Admin — Complaints](#8-admin--complaints) | List all, Show detail, Assign, Update status |
-| 9 | [Admin — Users](#9-admin--users) | List, Change role |
+| 2 | [Auth — Me](#2-auth--me) | Get profile |
+| 3 | [Profile Media](#3-profile-media-all-roles) ⭐ NEW | Upload photo, Upload banner, Delete banner |
+| 4 | [Citizen — Complaints](#4-citizen--complaints) | List, Create, Show, Delete |
+| 5 | [Citizen — Media](#5-citizen--media) | Upload, Delete |
+| 6 | [Citizen — Feedback](#6-citizen--feedback) | Submit rating |
+| 7 | [Engineer — Complaints](#7-engineer--complaints) | List, Show, Update status |
+| 8 | [Engineer — Media](#8-engineer--media) ⭐ | Upload evidence |
+| 9 | [Admin — Complaints](#9-admin--complaints) | List all, Show, Assign, Update status, Rate engineer |
+| 10 | [Admin — Users](#10-admin--users) | List, Change role |
 | — | [Status Transitions](#status-transitions) | Valid transition rules |
 | — | [Media Stages](#media-stages) | Before vs After |
 | — | [Response Shapes](#standard-response-shapes) | Standard shapes |
@@ -109,7 +110,8 @@ const data = await res.json();
     "phone": "9876543210",
     "role": "citizen",
     "gender": "male",
-    "profile_photo_url": "https://lh3.googleusercontent.com/...",
+    "profile_photo_url": "https://s3.amazonaws.com/bucket/users/1/profile/photo_abc.jpg",
+    "profile_banner_url": "https://s3.amazonaws.com/bucket/users/1/profile/banner_xyz.jpg",
     "auth_provider": "google",
     "is_active": true,
     "created_at": "2026-05-14T02:00:00+00:00"
@@ -117,15 +119,109 @@ const data = await res.json();
 }
 ```
 
+> **Note:** `profile_photo_url` is `null` if no photo set and no Google avatar exists — frontend should show initials fallback. `profile_banner_url` is `null` when not set — show gradient fallback.
+
 **Axios**
 ```js
 const { data } = await axios.get('/api/v1/me');
 // data.data → user object
+// data.data.profile_photo_url  → S3 URL, Google URL, or null
+// data.data.profile_banner_url → S3 URL or null
 ```
 
 ---
 
-## 3. Citizen — Complaints
+## 3. Profile Media (All Roles)
+
+> Upload or remove the authenticated user's profile photo and banner cover image. **Available to all roles** (citizen, engineer, admin) — no role restriction.
+
+**Auth:** `auth:web` (any role)
+**Storage:** Files are uploaded to **AWS S3** under `users/{id}/profile/`. The old file is automatically deleted from S3 before saving the new one.
+
+---
+
+### `POST /api/v1/profile/photo`
+> Upload or replace the profile photo. Accepts JPEG, PNG, WebP, GIF. Max **5 MB**.
+
+**Content-Type:** `multipart/form-data`
+
+**Request Payload**
+```
+photo = <file>    [required, image, mimes:jpeg/png/webp/gif, max:5120 KB]
+```
+
+**Response `200`**
+```json
+{
+  "message": "Profile photo updated.",
+  "profile_photo_url": "https://s3.amazonaws.com/bucket/users/1/profile/photo_abc123.jpg"
+}
+```
+
+**Errors:** `422` — missing file, wrong MIME type, or file too large.
+
+**Axios**
+```js
+const form = new FormData();
+form.append('photo', fileInput.files[0]);
+
+const { data } = await axios.post('/api/v1/profile/photo', form, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+// data.profile_photo_url → new S3 URL
+```
+
+---
+
+### `POST /api/v1/profile/banner`
+> Upload or replace the profile banner (cover image). Accepts JPEG, PNG, WebP. Max **8 MB**.
+
+**Content-Type:** `multipart/form-data`
+
+**Request Payload**
+```
+banner = <file>    [required, image, mimes:jpeg/png/webp, max:8192 KB]
+```
+
+**Response `200`**
+```json
+{
+  "message": "Profile banner updated.",
+  "profile_banner_url": "https://s3.amazonaws.com/bucket/users/1/profile/banner_xyz456.png"
+}
+```
+
+**Axios**
+```js
+const form = new FormData();
+form.append('banner', fileInput.files[0]);
+
+const { data } = await axios.post('/api/v1/profile/banner', form, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+// data.profile_banner_url → new S3 URL
+```
+
+---
+
+### `DELETE /api/v1/profile/banner`
+> Remove the banner image. Deletes from S3 and reverts the profile to its gradient default.
+
+**Request Payload:** none
+
+**Response `200`**
+```json
+{ "message": "Banner removed." }
+```
+
+**Axios**
+```js
+await axios.delete('/api/v1/profile/banner');
+```
+
+---
+
+## 4. Citizen — Complaints
 
 **Auth:** `role:citizen` — scoped to the authenticated citizen only.
 
@@ -351,7 +447,7 @@ const { data } = await axios.delete(`/api/v1/citizen/complaints/${id}`);
 
 ---
 
-## 4. Citizen — Media
+## 5. Citizen — Media
 
 ### `POST /api/v1/citizen/complaints/{id}/media`
 > Upload additional files to an existing complaint. File type is auto-detected by MIME.
@@ -404,7 +500,7 @@ await axios.delete(`/api/v1/citizen/media/${mediaId}`);
 
 ---
 
-## 5. Citizen — Feedback
+## 6. Citizen — Feedback
 
 ### `POST /api/v1/citizen/complaints/{id}/feedback`
 > Submit a star rating + optional comment for a **resolved** complaint. One per complaint.
@@ -447,7 +543,7 @@ const { data } = await axios.post(`/api/v1/citizen/complaints/${id}/feedback`, {
 
 ---
 
-## 6. Engineer — Complaints
+## 7. Engineer — Complaints
 
 **Auth:** `role:engineer` — scoped to complaints assigned to this engineer.
 
@@ -507,14 +603,17 @@ const { data } = await axios.get(`/api/v1/engineer/complaints/${id}`);
 | `status` | string | ✅ | must be a valid transition from current status |
 | `remarks` | string | ❌ | max 500 chars — shown in citizen's timeline |
 
-**Valid status transitions**
+**Valid engineer status transitions**
 ```
-pending      →  under_review   OR  rejected
-under_review →  in_progress    OR  rejected
-in_progress  →  resolved       OR  rejected
-resolved     →  (terminal — no changes allowed)
-rejected     →  (terminal — no changes allowed)
+pending               →  under_review
+under_review          →  in_progress
+in_progress           →  awaiting_verification   (requires evidence uploaded)
+awaiting_verification →  (locked — admin-only decision)
+verified              →  (terminal)
+rejected              →  (terminal)
 ```
+
+> ⚠️ **Security:** Once a complaint enters `awaiting_verification`, the engineer endpoint returns `403` for any further status change. Only the admin can move it forward to `verified`, back to `in_progress`, or `rejected`.
 
 **Response `200`**
 ```json
@@ -536,7 +635,7 @@ const { data } = await axios.patch(`/api/v1/engineer/complaints/${id}/status`, {
 
 ---
 
-## 7. Engineer — Media ⭐
+## 8. Engineer — Media ⭐
 
 **Auth:** `role:engineer` — only the **assigned engineer** for a complaint can upload/delete its after-work evidence.
 
@@ -603,7 +702,7 @@ await axios.delete(`/api/v1/engineer/media/${mediaId}`);
 
 ---
 
-## 8. Admin — Complaints
+## 9. Admin — Complaints
 
 **Auth:** `role:admin`
 
@@ -703,13 +802,13 @@ const { data } = await axios.patch(`/api/v1/admin/complaints/${id}/assign`, {
 ---
 
 ### `PATCH /api/v1/admin/complaints/{id}/status` ⭐
-> Admin sets complaint to **any** status directly. Unlike the engineer endpoint, this is **not** bound by `VALID_TRANSITIONS` — admin can jump to `resolved` after reviewing after-photos or revert to `in_progress` if work is unsatisfactory.
+> Admin sets the complaint status after reviewing engineer evidence. Admin can set `verified`, `in_progress` (send back for rework), or `rejected`.
 
 **Content-Type:** `application/json`
 
 **Request Payload**
 ```json
-{ "status": "resolved", "remarks": "Work verified. Pothole filled correctly." }
+{ "status": "verified", "remarks": "Work confirmed. Road surface restored." }
 ```
 
 | Field | Type | Required | Rules |
@@ -717,29 +816,60 @@ const { data } = await axios.patch(`/api/v1/admin/complaints/${id}/assign`, {
 | `status` | string | ✅ | any valid status value |
 | `remarks` | string | ❌ | max 500 chars — shown in timeline |
 
-**Typical workflow:**
+**Typical admin verification workflow:**
 ```
-Admin opens complaint slide-over → reviews before + after photos
-  ✅ Work is good  → PATCH status: "resolved"
-  ❌ Work is poor  → PATCH status: "in_progress", remarks: "Rework required"
+Complaint arrives at awaiting_verification (engineer submitted evidence)
+Admin opens slide-over → reviews before + after photos
+  ✅ Work is satisfactory  → PATCH status: "verified"
+  🔄 Needs more work       → PATCH status: "in_progress", remarks: "Rework required"
+  ❌ Rejected entirely     → PATCH status: "rejected"
 ```
 
 **Response `200`**
 ```json
-{ "message": "Status updated.", "status": "resolved" }
+{ "message": "Status updated.", "status": "verified" }
 ```
 
 **Axios**
 ```js
 const { data } = await axios.patch(`/api/v1/admin/complaints/${id}/status`, {
-  status:  'resolved',
+  status:  'verified',
   remarks: 'Pothole fixed and road surface is smooth.'
 });
 ```
 
 ---
 
-## 9. Admin — Users
+### `POST /api/v1/admin/complaints/{id}/rate` ⭐
+> Admin rates the engineer's performance on a resolved complaint (1–5 stars). One rating per complaint.
+
+**Content-Type:** `application/json`
+
+**Request Payload**
+```json
+{ "rating": 5, "remarks": "Excellent work, completed ahead of schedule." }
+```
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| `rating` | integer | ✅ | 1 to 5 |
+| `remarks` | string | ❌ | max 500 chars |
+
+**Response `200`**
+```json
+{ "message": "Engineer rated." }
+```
+
+**Errors:** `403` — complaint is not in `verified` status.
+
+**Axios**
+```js
+await axios.post(`/api/v1/admin/complaints/${id}/rate`, { rating: 4, remarks: 'Good work.' });
+```
+
+---
+
+## 10. Admin — Users
 
 **Auth:** `role:admin`
 
@@ -806,16 +936,26 @@ const { data } = await axios.patch(`/api/v1/admin/users/${userId}/role`, {
 
 ## Status Transitions
 
-### Engineer (enforced by `VALID_TRANSITIONS`):
+### Engineer workflow (enforced by backend `VALID_TRANSITIONS`):
 ```
-pending  ──►  under_review  ──►  in_progress  ──►  resolved
-   │               │                  │
-   └──► rejected   └──► rejected       └──► rejected
+pending  ──►  under_review  ──►  in_progress  ──►  awaiting_verification
+                                                           │
+                                             (engineer locked — admin decides)
+                                                           │
+                                              ┌────────────┼────────────┐
+                                           verified    in_progress   rejected
+                                         (terminal)   (rework loop) (terminal)
 ```
-Engineers **cannot skip steps** — must follow the order above.
 
-### Admin (unrestricted):
-Admin can set **any** status via `PATCH /api/v1/admin/complaints/{id}/status` — useful to revert, force-resolve, or reject at any stage.
+- Engineers **cannot skip steps** and **cannot act** once status is `awaiting_verification`.
+- `awaiting_verification` is the engineer's submission gate — triggers admin review.
+
+### Admin decisions (from `awaiting_verification`):
+| Admin action | New status | Meaning |
+|---|---|---|
+| Approve | `verified` | Work confirmed, complaint closed |
+| Send back | `in_progress` | Rework required, engineer must re-submit |
+| Reject | `rejected` | Complaint permanently rejected |
 
 ---
 
@@ -885,4 +1025,4 @@ Admin can set **any** status via `PATCH /api/v1/admin/complaints/{id}/status` �
 
 ---
 
-*Last updated: 2026-05-14 · RoadWatch API v1*
+*Last updated: 2026-05-16 · RoadWatch API v1*

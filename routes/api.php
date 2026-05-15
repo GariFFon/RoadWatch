@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\ComplaintOptionsController;
 use App\Http\Controllers\Api\V1\Citizen\ComplaintController;
 use App\Http\Controllers\Api\V1\Citizen\FeedbackController;
 use App\Http\Controllers\Api\V1\Citizen\MediaController;
+use App\Http\Controllers\Api\V1\ProfileMediaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +26,11 @@ Route::middleware(['auth:web'])->group(function () {
 
     // Who am I?
     Route::get('/me', [MeController::class, 'show']);  // GET /api/v1/me
+
+    // ── Profile media (all roles) ────────────────────────────────────────────
+    Route::post  ('/profile/photo',  [ProfileMediaController::class, 'uploadPhoto']);  // POST   /api/v1/profile/photo
+    Route::post  ('/profile/banner', [ProfileMediaController::class, 'uploadBanner']); // POST   /api/v1/profile/banner
+    Route::delete('/profile/banner', [ProfileMediaController::class, 'deleteBanner']); // DELETE /api/v1/profile/banner
 
     // ── Citizen ────────────────────────────────────────────────────────────
     Route::middleware('role:citizen')->prefix('citizen')->name('api.citizen.')->group(function () {
