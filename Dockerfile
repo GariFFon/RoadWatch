@@ -39,15 +39,15 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-interaction \
     --no-scripts
 
-# Cache Laravel config/routes (view:cache runs at startup, needs APP_KEY)
-RUN php artisan config:cache \
-    && php artisan route:cache
-
 # Storage permissions
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE $PORT
 
-CMD php artisan migrate --force \
+CMD php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache \
+    && php artisan storage:link \
+    && php artisan migrate --force \
     && php artisan db:seed --class=CategorySeeder --force \
     && php artisan serve --host=0.0.0.0 --port=$PORT
