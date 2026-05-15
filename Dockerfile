@@ -28,6 +28,14 @@ RUN docker-php-ext-install \
     intl \
     opcache
 
+# Raise PHP upload limits (default 2MB is too small for video uploads)
+RUN echo "upload_max_filesize = 64M\n\
+post_max_size = 128M\n\
+memory_limit = 256M\n\
+max_execution_time = 120\n\
+max_input_time = 120" > /usr/local/etc/php/conf.d/uploads.ini
+
+
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
