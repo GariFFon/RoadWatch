@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Railway's load balancer proxy (handles SSL termination)
+        $middleware->trustProxies(at: '*');
+
         // Required for auth:web to work on API routes:
         // 1. EncryptCookies   → decrypts the laravel_session cookie
         // 2. StartSession     → loads the session from the decrypted cookie
