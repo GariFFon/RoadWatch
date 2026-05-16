@@ -10,7 +10,8 @@
 @vite(['resources/css/app.css'])
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;}
+html{overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;overflow-x:hidden}
 
 /* ── Sidebar ── */
 .eng-sidebar{width:230px;flex-shrink:0;background:#0f172a;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .25s ease;}
@@ -74,10 +75,11 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 @media(max-width:768px){
   .eng-sidebar{transform:translateX(-100%);}
   .eng-sidebar.open{transform:translateX(0);}
-  .eng-main{margin-left:0;}
+  .eng-main{margin-left:0;width:100vw;max-width:100vw;overflow-x:hidden;}
   .eng-hamburger{display:flex;}
-  .eng-content{padding:1rem;}
-  .eng-topbar{padding:0 1rem;}
+  .eng-content{padding:1rem;max-width:100%;}
+  .eng-topbar{padding:0 1rem;max-width:100vw;}
+  .eng-card{max-width:100%;}
 }
 </style>
 </head>

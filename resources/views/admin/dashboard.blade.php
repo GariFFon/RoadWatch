@@ -4,14 +4,38 @@
 
 @section('content')
 <style>
+  /* Stats grid: 4-col desktop → 2-col mobile */
   .dash-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem;}
+
+  /* Main grid: table+sidebar desktop → stacked mobile */
   .dash-main-grid{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;}
+
+  /* Table: visible on desktop */
+  .dash-table-wrap{display:block;width:100%;overflow:hidden;}
+  .dash-table{width:100%;border-collapse:collapse;}
+
+  /* Cards: visible on mobile (hidden desktop) */
+  .dash-cards{display:none;flex-direction:column;gap:.75rem;padding:.75rem 1rem 1rem;}
+
   @media(max-width:900px){
     .dash-main-grid{grid-template-columns:1fr;}
   }
   @media(max-width:640px){
-    .dash-stats-grid{grid-template-columns:repeat(2,1fr);gap:.875rem;margin-bottom:1.25rem;}
+    .dash-stats-grid{grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.25rem;}
+    .dash-stat-card{padding:1rem !important;}
+    .dash-stat-val{font-size:1.625rem !important;}
+    /* hide table, show cards on mobile */
+    .dash-table-wrap{display:none;}
+    .dash-cards{display:flex;}
   }
+
+  /* Complaint card (mobile list item) */
+  .dash-ccard{background:#fafafa;border:1.5px solid #f1f1f1;border-radius:.875rem;padding:.875rem 1rem;}
+  .dash-ccard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;}
+  .dash-ccard-title{font-size:.875rem;font-weight:700;color:#111827;line-height:1.35;}
+  .dash-ccard-loc{font-size:.75rem;color:#9ca3af;margin-top:.15rem;}
+  .dash-ccard-meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;}
+  .dash-pill{font-size:.7rem;font-weight:700;padding:.2rem .6rem;border-radius:9999px;}
 </style>
 
 {{-- Stats row --}}
@@ -21,23 +45,30 @@
     @endforeach
 </div>
 
-{{-- Recent complaints table + status breakdown --}}
+{{-- Recent complaints + status breakdown --}}
 <div class="dash-main-grid">
 
     {{-- Recent complaints --}}
-    <div class="adm-card">
-        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
+    <div class="adm-card" style="min-width:0;overflow:hidden;">
+        <div style="padding:1.125rem 1.25rem;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
             <h2 style="font-size:.9375rem;font-weight:700;color:#111827;">📋 Recent Complaints</h2>
             <a href="{{ route('admin.complaints.index') }}"
-               style="font-size:.8125rem;font-weight:600;color:#4f46e5;text-decoration:none;">View all →</a>
+               style="font-size:.8125rem;font-weight:600;color:#4f46e5;text-decoration:none;white-space:nowrap;">View all →</a>
         </div>
-        <div id="recent-table" style="overflow-x:auto;">
+
+        {{-- Desktop table (hidden on mobile via CSS) --}}
+        <div class="dash-table-wrap" id="recent-table">
             <div style="padding:2rem;text-align:center;color:#9ca3af;font-size:.875rem;">Loading…</div>
+        </div>
+
+        {{-- Mobile cards (hidden on desktop via CSS) --}}
+        <div class="dash-cards" id="recent-cards">
+            {{-- populated by JS --}}
         </div>
     </div>
 
     {{-- Status breakdown --}}
-    <div class="adm-card" style="padding:1.25rem;">
+    <div class="adm-card" style="padding:1.25rem;min-width:0;">
         <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:1.25rem;">📈 By Status</h2>
         <div id="status-breakdown" style="display:flex;flex-direction:column;gap:.875rem;">
             <div style="background:#f3f4f6;border-radius:.75rem;height:40px;animation:pulse 1.4s infinite;"></div>
@@ -74,40 +105,36 @@ async function loadDashboard() {
         const meta  = res.data.meta ?? {};
         const total = meta.total ?? items.length;
 
-        // ── Count by status ──
-        const counts = {};
-        items.forEach(c => { counts[c.status] = (counts[c.status]||0)+1; });
-
         // ── Stats cards ──
         const statCards = [
-            {label:'Total Complaints', value:total,                                icon:'📋', bg:'#eef2ff', color:'#4f46e5'},
-            {label:'Pending',          value:items.filter(c=>c.status==='pending').length, icon:'⏳', bg:'#fffbeb', color:'#92400e'},
-            {label:'In Progress',      value:items.filter(c=>c.status==='in_progress').length, icon:'🔧', bg:'#dbeafe', color:'#1d4ed8'},
-            {label:'Resolved',         value:items.filter(c=>c.status==='resolved').length, icon:'✅', bg:'#f0fdf4', color:'#14532d'},
+            {label:'Total Complaints', value:total,                                                     icon:'📋', bg:'#eef2ff', color:'#4f46e5'},
+            {label:'Pending',          value:items.filter(c=>c.status==='pending').length,              icon:'⏳', bg:'#fffbeb', color:'#92400e'},
+            {label:'In Progress',      value:items.filter(c=>c.status==='in_progress').length,          icon:'🔧', bg:'#dbeafe', color:'#1d4ed8'},
+            {label:'Resolved',         value:items.filter(c=>c.status==='resolved').length,             icon:'✅', bg:'#f0fdf4', color:'#14532d'},
         ];
         document.getElementById('stats-row').innerHTML = statCards.map(s => `
-            <div style="background:${s.bg};border-radius:1rem;padding:1.375rem 1.5rem;
-                        border:1px solid ${s.color}22;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem;">
-                    <span style="font-size:1.375rem;">${s.icon}</span>
-                    <span style="font-size:.7rem;font-weight:700;color:${s.color};background:${s.color}18;
+            <div class="dash-stat-card" style="background:${s.bg};border-radius:1rem;padding:1.375rem 1.25rem;border:1px solid ${s.color}22;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+                    <span style="font-size:1.25rem;">${s.icon}</span>
+                    <span style="font-size:.65rem;font-weight:700;color:${s.color};background:${s.color}18;
                                  padding:.15rem .5rem;border-radius:9999px;">LIVE</span>
                 </div>
-                <div style="font-size:2rem;font-weight:900;color:${s.color};line-height:1;">${s.value}</div>
-                <div style="font-size:.78rem;font-weight:600;color:${s.color};opacity:.75;margin-top:.25rem;">${s.label}</div>
+                <div class="dash-stat-val" style="font-size:1.875rem;font-weight:900;color:${s.color};line-height:1;">${s.value}</div>
+                <div style="font-size:.75rem;font-weight:600;color:${s.color};opacity:.75;margin-top:.25rem;">${s.label}</div>
             </div>`).join('');
 
-        // ── Recent table ──
         if (!items.length) {
-            document.getElementById('recent-table').innerHTML =
-                '<div style="padding:2rem;text-align:center;color:#9ca3af;">No complaints yet.</div>';
+            const empty = '<div style="padding:2rem;text-align:center;color:#9ca3af;">No complaints yet.</div>';
+            document.getElementById('recent-table').innerHTML = empty;
+            document.getElementById('recent-cards').innerHTML = empty;
         } else {
+            // ── Desktop table ──
             document.getElementById('recent-table').innerHTML = `
-                <table style="width:100%;border-collapse:collapse;">
+                <table class="dash-table">
                     <thead>
                         <tr style="border-bottom:1px solid #f3f4f6;">
-                            ${['#','Title','Category','Status','Severity','Submitted'].map(h=>
-                                `<th style="padding:.625rem 1.25rem;text-align:left;font-size:.75rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">${h}</th>`
+                            ${['#','Title','Category','Status','Severity','Date'].map(h=>
+                                `<th style="padding:.625rem 1rem;text-align:left;font-size:.72rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">${h}</th>`
                             ).join('')}
                         </tr>
                     </thead>
@@ -117,23 +144,43 @@ async function loadDashboard() {
                             const sev = SEV_CFG[c.severity]??{bg:'#f3f4f6',color:'#374151'};
                             return `<tr style="border-bottom:1px solid #f9fafb;transition:background .1s;"
                                         onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
-                                <td style="padding:.75rem 1.25rem;font-size:.78rem;color:#9ca3af;white-space:nowrap;">${esc(c.complaint_number)}</td>
-                                <td style="padding:.75rem 1.25rem;font-size:.875rem;font-weight:600;color:#111827;max-width:200px;">
+                                <td style="padding:.625rem 1rem;font-size:.75rem;color:#9ca3af;white-space:nowrap;">${esc(c.complaint_number)}</td>
+                                <td style="padding:.625rem 1rem;font-size:.8125rem;font-weight:600;color:#111827;max-width:180px;">
                                     <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.title)}</div>
-                                    <div style="font-size:.75rem;color:#9ca3af;margin-top:.1rem;">${esc(c.location)}</div>
+                                    <div style="font-size:.72rem;color:#9ca3af;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.location)}</div>
                                 </td>
-                                <td style="padding:.75rem 1.25rem;font-size:.8125rem;color:#374151;">${esc(c.category?.name??'—')}</td>
-                                <td style="padding:.75rem 1.25rem;">
-                                    <span style="background:${s.bg};color:${s.color};font-size:.7rem;font-weight:700;padding:.2rem .625rem;border-radius:9999px;">${s.label}</span>
+                                <td style="padding:.625rem 1rem;font-size:.8rem;color:#374151;">${esc(c.category?.name??'—')}</td>
+                                <td style="padding:.625rem 1rem;">
+                                    <span style="background:${s.bg};color:${s.color};font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:9999px;">${s.label}</span>
                                 </td>
-                                <td style="padding:.75rem 1.25rem;">
-                                    <span style="background:${sev.bg};color:${sev.color};font-size:.7rem;font-weight:700;padding:.2rem .625rem;border-radius:9999px;">${(c.severity??'').replace('_',' ')}</span>
+                                <td style="padding:.625rem 1rem;">
+                                    <span style="background:${sev.bg};color:${sev.color};font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:9999px;">${(c.severity??'').replace('_',' ')}</span>
                                 </td>
-                                <td style="padding:.75rem 1.25rem;font-size:.8125rem;color:#6b7280;white-space:nowrap;">${fmt(c.created_at)}</td>
+                                <td style="padding:.625rem 1rem;font-size:.8rem;color:#6b7280;white-space:nowrap;">${fmt(c.created_at)}</td>
                             </tr>`;
                         }).join('')}
                     </tbody>
                 </table>`;
+
+            // ── Mobile cards ──
+            document.getElementById('recent-cards').innerHTML = items.slice(0,8).map(c => {
+                const s   = STATUS_CFG[c.status]??{label:c.status,color:'#374151',bg:'#f3f4f6',icon:'📌'};
+                const sev = SEV_CFG[c.severity]??{bg:'#f3f4f6',color:'#374151'};
+                return `<div class="dash-ccard">
+                    <div class="dash-ccard-top">
+                        <div style="min-width:0;">
+                            <div class="dash-ccard-title">${esc(c.title)}</div>
+                            <div class="dash-ccard-loc">📍 ${esc(c.location)}</div>
+                        </div>
+                        <span class="dash-pill" style="background:${s.bg};color:${s.color};flex-shrink:0;">${s.icon} ${s.label}</span>
+                    </div>
+                    <div class="dash-ccard-meta">
+                        <span class="dash-pill" style="background:#f3f4f6;color:#374151;">📂 ${esc(c.category?.name??'—')}</span>
+                        <span class="dash-pill" style="background:${sev.bg};color:${sev.color};">${(c.severity??'—').replace('_',' ')}</span>
+                        <span style="font-size:.72rem;color:#9ca3af;margin-left:auto;">${fmt(c.created_at)}</span>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         // ── Status breakdown ──
