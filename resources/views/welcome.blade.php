@@ -13,21 +13,41 @@ html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:#fff;color:#111827;-webkit-font-smoothing:antialiased}
 
 /* ─── NAV ─────────────────────────────────────────────────────────────────── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.92);
-    backdrop-filter:blur(16px);border-bottom:1px solid #f1f1f1;padding:0 2rem;
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.96);
+    backdrop-filter:blur(16px);border-bottom:1px solid #f1f1f1;padding:0 1.25rem;
     transition:box-shadow .3s}
 nav.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.07)}
-.ni{max-width:1200px;margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:.625rem;text-decoration:none}
-.li{width:36px;height:36px;background:#4f46e5;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-.lt{font-size:1.0625rem;font-weight:800;color:#111827;letter-spacing:-.02em}
-.nl{display:flex;align-items:center;gap:.5rem}
-.nlk{font-size:.875rem;font-weight:500;color:#6b7280;text-decoration:none;padding:.375rem .75rem;border-radius:.5rem;transition:background .15s,color .15s}
+.ni{max-width:1200px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.logo{display:flex;align-items:center;gap:.5rem;text-decoration:none;flex-shrink:0}
+.li{width:34px;height:34px;background:#4f46e5;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.lt{font-size:1rem;font-weight:800;color:#111827;letter-spacing:-.02em}
+/* Desktop nav links */
+.nl{display:flex;align-items:center;gap:.375rem}
+.nlk{font-size:.875rem;font-weight:500;color:#6b7280;text-decoration:none;padding:.375rem .625rem;border-radius:.5rem;transition:background .15s,color .15s;white-space:nowrap}
 .nlk:hover{background:#f3f4f6;color:#111827}
-.bo{border:1.5px solid #e5e7eb;color:#374151;border-radius:.625rem;padding:.4rem .9rem;font-size:.875rem;font-weight:600;text-decoration:none;transition:all .15s}
+.bo{border:1.5px solid #e5e7eb;color:#374151;border-radius:.625rem;padding:.4rem .85rem;font-size:.8125rem;font-weight:600;text-decoration:none;transition:all .15s;white-space:nowrap}
 .bo:hover{border-color:#4f46e5;color:#4f46e5}
-.bp{background:#4f46e5;color:#fff;border-radius:.625rem;padding:.475rem 1rem;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s,box-shadow .15s;box-shadow:0 1px 6px rgba(79,70,229,.3)}
+.bp{background:#4f46e5;color:#fff;border-radius:.625rem;padding:.45rem .9rem;font-size:.8125rem;font-weight:600;text-decoration:none;transition:background .15s,box-shadow .15s;box-shadow:0 1px 6px rgba(79,70,229,.3);white-space:nowrap}
 .bp:hover{background:#4338ca;box-shadow:0 4px 14px rgba(79,70,229,.35)}
+/* Hamburger button */
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:38px;height:38px;
+  gap:5px;background:none;border:1.5px solid #e5e7eb;border-radius:.5rem;cursor:pointer;flex-shrink:0;padding:6px;transition:border-color .2s}
+.hamburger:hover{border-color:#4f46e5}
+.hamburger span{display:block;width:18px;height:2px;background:#374151;border-radius:2px;transition:all .25s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+/* Mobile nav drawer */
+.mobile-nav{display:none;position:fixed;top:60px;left:0;right:0;z-index:99;
+  background:#fff;border-bottom:1px solid #f1f1f1;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);padding:.75rem 1.25rem 1rem;
+  flex-direction:column;gap:.25rem;animation:slideDown .2s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.mobile-nav.open{display:flex}
+.mobile-nav .nlk{padding:.65rem .75rem;font-size:.9375rem;border-radius:.625rem;display:block}
+.mobile-nav-divider{height:1px;background:#f3f4f6;margin:.375rem 0}
+.mobile-nav-actions{display:flex;gap:.625rem;margin-top:.375rem}
+.mobile-nav-actions .bo,.mobile-nav-actions .bp{flex:1;text-align:center;padding:.6rem 1rem;font-size:.875rem}
 
 /* ─── HERO ────────────────────────────────────────────────────────────────── */
 .hero{min-height:100vh;display:flex;align-items:center;padding:7rem 2rem 5rem;
@@ -142,10 +162,29 @@ footer{background:#111827;padding:2.5rem 2rem}
   .si{grid-template-columns:repeat(2,1fr)}
   .steps,.cg{grid-template-columns:repeat(2,1fr)}
 }
+@media(max-width:720px){
+  /* Hide desktop nav, show hamburger */
+  .nl{display:none !important}
+  .hamburger{display:flex}
+  /* Shrink hero padding */
+  .hero{padding:6rem 1.25rem 4rem}
+  h1{font-size:2.25rem}
+  .hdesc{font-size:1rem}
+  .sec{padding:4rem 1.25rem}
+  .stats{padding:3rem 1.25rem}
+  .cta{padding:4rem 1.25rem}
+  footer{padding:2rem 1.25rem}
+}
 @media(max-width:600px){
-  h1{font-size:2.125rem}
+  h1{font-size:1.875rem}
   .steps,.cg{grid-template-columns:1fr}
   .si{grid-template-columns:repeat(2,1fr)}
+  .stit{font-size:1.75rem}
+  .cta h2{font-size:1.875rem}
+  .hctas{flex-direction:column;align-items:center}
+  .bhp,.bhs{width:100%;justify-content:center;max-width:320px}
+  .fi{flex-direction:column;align-items:flex-start;gap:1rem}
+  .flinks{flex-wrap:wrap;gap:1rem}
 }
 </style>
 </head>
@@ -158,6 +197,7 @@ footer{background:#111827;padding:2.5rem 2rem}
       <div class="li">🛣️</div>
       <span class="lt">RoadWatch</span>
     </a>
+    {{-- Desktop nav links --}}
     <div class="nl">
       <a href="javascript:void(0)" onclick="scrollTo('how')" class="nlk">How it works</a>
       <a href="javascript:void(0)" onclick="scrollTo('categories')" class="nlk">Categories</a>
@@ -167,8 +207,28 @@ footer{background:#111827;padding:2.5rem 2rem}
         <div style="width:90px;height:34px;background:#f3f4f6;border-radius:.625rem;animation:catpulse 1.4s infinite;"></div>
       </div>
     </div>
+    {{-- Hamburger button (mobile only) --}}
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" onclick="toggleMobileNav()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </nav>
+
+{{-- Mobile Nav Drawer --}}
+<div class="mobile-nav" id="mobile-nav">
+  <a href="javascript:void(0)" onclick="scrollTo('how');closeMobileNav()" class="nlk">🗺️ How it works</a>
+  <a href="javascript:void(0)" onclick="scrollTo('categories');closeMobileNav()" class="nlk">📂 Categories</a>
+  <div class="mobile-nav-divider"></div>
+  <div id="mobile-nav-user-area">
+    {{-- Populated by JS --}}
+    <div class="mobile-nav-actions">
+      <div style="flex:1;height:42px;background:#f3f4f6;border-radius:.625rem;animation:catpulse 1.4s infinite;"></div>
+      <div style="flex:1;height:42px;background:#f3f4f6;border-radius:.625rem;animation:catpulse 1.4s infinite;"></div>
+    </div>
+  </div>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -474,6 +534,16 @@ async function loadUserState() {
       <a href="{{ route('login') }}" class="bo">Sign in</a>
       <a href="{{ route('register') }}" class="bp">Get Started</a>`;
 
+    // ── Mobile nav: not logged in ──
+    const mobileArea = document.getElementById('mobile-nav-user-area');
+    if (mobileArea) {
+      mobileArea.innerHTML = `
+        <div class="mobile-nav-actions">
+          <a href="{{ route('login') }}" class="bo" onclick="closeMobileNav()">Sign in</a>
+          <a href="{{ route('register') }}" class="bp" onclick="closeMobileNav()">Get Started</a>
+        </div>`;
+    }
+
     heroCtas.innerHTML = `
       <a href="{{ route('register') }}" class="bhp">🚀 Create Free Account</a>
       <a href="javascript:void(0)" onclick="scrollTo('how')" class="bhs">See How it Works</a>`;
@@ -496,6 +566,33 @@ document.addEventListener('click', e => {
   if (btn && !btn.contains(e.target)) {
     const m = document.getElementById('wlc-menu');
     if (m) { m.style.display = 'none'; document.getElementById('wlc-chev').style.transform = ''; }
+  }
+});
+
+// ── Mobile nav toggle ────────────────────────────────────────────────────────
+function toggleMobileNav() {
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('hamburger-btn');
+  const isOpen = nav.classList.contains('open');
+  if (isOpen) {
+    nav.classList.remove('open');
+    btn.classList.remove('open');
+  } else {
+    nav.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+function closeMobileNav() {
+  document.getElementById('mobile-nav').classList.remove('open');
+  document.getElementById('hamburger-btn').classList.remove('open');
+}
+// Close mobile nav on outside click
+document.addEventListener('click', e => {
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('hamburger-btn');
+  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('open');
+    btn.classList.remove('open');
   }
 });
 
