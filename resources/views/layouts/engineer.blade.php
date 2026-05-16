@@ -13,28 +13,41 @@
 body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;}
 
 /* ── Sidebar ── */
-.eng-sidebar{width:230px;flex-shrink:0;background:#0f172a;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+.eng-sidebar{width:230px;flex-shrink:0;background:#0f172a;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .25s ease;}
 .eng-logo{display:flex;align-items:center;gap:.625rem;padding:1.375rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.07);}
 .eng-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#0ea5e9,#6366f1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
 .eng-logo-text{font-size:1rem;font-weight:800;color:#fff;}
 .eng-logo-badge{font-size:.6rem;font-weight:700;background:#0ea5e9;color:#fff;padding:.15rem .4rem;border-radius:4px;margin-left:.25rem;}
-.eng-nav{flex:1;padding:1rem .75rem;display:flex;flex-direction:column;gap:.25rem;}
+.eng-nav{flex:1;padding:1rem .75rem;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;}
 .eng-nav-label{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;padding:.75rem .5rem .25rem;}
 .eng-nav-link{display:flex;align-items:center;gap:.625rem;padding:.625rem .875rem;border-radius:.625rem;font-size:.875rem;font-weight:500;color:rgba(255,255,255,.55);text-decoration:none;transition:background .15s,color .15s;}
 .eng-nav-link:hover{background:rgba(255,255,255,.07);color:#fff;}
 .eng-nav-link.active{background:rgba(14,165,233,.25);color:#fff;font-weight:600;}
 .eng-nav-link .icon{font-size:1rem;width:1.25rem;text-align:center;}
-.eng-footer{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.07);}
+.eng-footer{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;}
 .eng-user-row{display:flex;align-items:center;gap:.625rem;}
 .eng-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;flex-shrink:0;}
 .eng-signout{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.75rem;padding:.25rem;transition:color .15s;}
 .eng-signout:hover{color:#ef4444;}
 
+/* ── Overlay (mobile) ── */
+.eng-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;backdrop-filter:blur(2px);}
+.eng-overlay.open{display:block;}
+
 /* ── Main ── */
 .eng-main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.eng-topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.eng-topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;gap:.75rem;}
+.eng-topbar-left{display:flex;align-items:center;gap:.75rem;}
 .eng-topbar-title{font-size:1rem;font-weight:700;color:#111827;}
-.eng-content{padding:2rem;flex:1;}
+.eng-content{padding:1.5rem;flex:1;}
+
+/* ── Hamburger ── */
+.eng-hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:36px;height:36px;gap:5px;background:none;border:1.5px solid #e5e7eb;border-radius:.5rem;cursor:pointer;flex-shrink:0;padding:6px;transition:border-color .2s;}
+.eng-hamburger:hover{border-color:#0ea5e9;}
+.eng-hamburger span{display:block;width:16px;height:2px;background:#374151;border-radius:2px;transition:all .25s;}
+.eng-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.eng-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.eng-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
 /* ── Utilities ── */
 .eng-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;box-shadow:0 1px 4px rgba(0,0,0,.05);}
@@ -46,16 +59,26 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 .eng-btn-outline:hover{border-color:#93c5fd;color:#0ea5e9;}
 .eng-btn-sm{padding:.3rem .7rem;font-size:.78rem;}
 .eng-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-.eng-input{border:1.5px solid #e5e7eb;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;outline:none;font-family:inherit;transition:border-color .15s;background:#fff;color:#111827;}
+.eng-input{border:1.5px solid #e5e7eb;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;outline:none;font-family:inherit;transition:border-color .15s;background:#fff;color:#111827;width:100%;}
 .eng-input:focus{border-color:#0ea5e9;}
 .eng-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .5rem center;background-size:1rem;padding-right:2rem;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── Modal ── */
-.eng-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+.eng-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:1rem;}
 .eng-modal-bg.open{display:flex;}
-.eng-modal{background:#fff;border-radius:1.25rem;width:480px;max-width:calc(100vw - 2rem);padding:1.75rem;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+.eng-modal{background:#fff;border-radius:1.25rem;width:480px;max-width:100%;padding:1.75rem;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .eng-sidebar{transform:translateX(-100%);}
+  .eng-sidebar.open{transform:translateX(0);}
+  .eng-main{margin-left:0;}
+  .eng-hamburger{display:flex;}
+  .eng-content{padding:1rem;}
+  .eng-topbar{padding:0 1rem;}
+}
 </style>
 </head>
 <body>
@@ -114,10 +137,19 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
     </div>
 </aside>
 
+{{-- ── Overlay (mobile) ── --}}
+<div class="eng-overlay" id="eng-overlay" onclick="engCloseSidebar()"></div>
+
 {{-- ── Main ── --}}
 <div class="eng-main">
     <header class="eng-topbar">
-        <span class="eng-topbar-title">@yield('page-title', 'Engineer Panel')</span>
+        <div class="eng-topbar-left">
+            {{-- Hamburger (mobile only) --}}
+            <button class="eng-hamburger" id="eng-hamburger" aria-label="Toggle sidebar" onclick="engToggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
+            <span class="eng-topbar-title">@yield('page-title', 'Engineer Panel')</span>
+        </div>
 
         {{-- Topbar user dropdown --}}
         <style>
@@ -201,6 +233,34 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
             if (menu && !e.target.closest('[onclick*="eng-user-menu"]') && !menu.contains(e.target)) {
                 menu.style.display = 'none';
             }
+        });
+
+        // ── Mobile sidebar drawer ──────────────────────────────────────────
+        function engToggleSidebar() {
+            const sidebar   = document.querySelector('.eng-sidebar');
+            const overlay   = document.getElementById('eng-overlay');
+            const hamburger = document.getElementById('eng-hamburger');
+            const isOpen    = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+                hamburger.classList.remove('open');
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('open');
+                hamburger.classList.add('open');
+            }
+        }
+        function engCloseSidebar() {
+            document.querySelector('.eng-sidebar').classList.remove('open');
+            document.getElementById('eng-overlay').classList.remove('open');
+            document.getElementById('eng-hamburger').classList.remove('open');
+        }
+        // Auto-close drawer when a nav link is tapped on mobile
+        document.querySelectorAll('.eng-nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) engCloseSidebar();
+            });
         });
     </script>
 
