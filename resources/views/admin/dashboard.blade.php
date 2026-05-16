@@ -3,16 +3,26 @@
 @section('page-title', '📊 Dashboard')
 
 @section('content')
+<style>
+  .dash-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem;}
+  .dash-main-grid{display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;}
+  @media(max-width:900px){
+    .dash-main-grid{grid-template-columns:1fr;}
+  }
+  @media(max-width:640px){
+    .dash-stats-grid{grid-template-columns:repeat(2,1fr);gap:.875rem;margin-bottom:1.25rem;}
+  }
+</style>
 
 {{-- Stats row --}}
-<div id="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem;">
+<div id="stats-row" class="dash-stats-grid">
     @foreach([1,2,3,4] as $i)
     <div style="background:#f3f4f6;border-radius:1rem;height:100px;animation:pulse 1.4s infinite;animation-delay:{{ ($i-1)*0.08 }}s;"></div>
     @endforeach
 </div>
 
 {{-- Recent complaints table + status breakdown --}}
-<div style="display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;">
+<div class="dash-main-grid">
 
     {{-- Recent complaints --}}
     <div class="adm-card">

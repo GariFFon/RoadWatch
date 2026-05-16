@@ -13,18 +13,18 @@
 body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;}
 
 /* ── Sidebar ── */
-.adm-sidebar{width:240px;flex-shrink:0;background:#111827;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+.adm-sidebar{width:240px;flex-shrink:0;background:#111827;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .25s ease;}
 .adm-logo{display:flex;align-items:center;gap:.625rem;padding:1.375rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.08);}
 .adm-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
 .adm-logo-text{font-size:1rem;font-weight:800;color:#fff;}
 .adm-logo-badge{font-size:.6rem;font-weight:700;background:#4f46e5;color:#fff;padding:.15rem .4rem;border-radius:4px;margin-left:.25rem;}
-.adm-nav{flex:1;padding:1rem .75rem;display:flex;flex-direction:column;gap:.25rem;}
+.adm-nav{flex:1;padding:1rem .75rem;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;}
 .adm-nav-label{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;padding:.75rem .5rem .25rem;}
 .adm-nav-link{display:flex;align-items:center;gap:.625rem;padding:.625rem .875rem;border-radius:.625rem;font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;transition:background .15s,color .15s;}
 .adm-nav-link:hover{background:rgba(255,255,255,.07);color:#fff;}
 .adm-nav-link.active{background:rgba(79,70,229,.35);color:#fff;font-weight:600;}
 .adm-nav-link .icon{font-size:1rem;width:1.25rem;text-align:center;}
-.adm-footer{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.08);}
+.adm-footer{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;}
 .adm-user-row{display:flex;align-items:center;gap:.625rem;}
 .adm-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;flex-shrink:0;}
 .adm-user-name{font-size:.8125rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -32,11 +32,24 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 .adm-signout{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:.75rem;padding:.25rem;border-radius:.375rem;transition:color .15s;}
 .adm-signout:hover{color:#ef4444;}
 
+/* ── Sidebar overlay (mobile) ── */
+.adm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;backdrop-filter:blur(2px);}
+.adm-overlay.open{display:block;}
+
 /* ── Main ── */
 .adm-main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.adm-topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.adm-topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;gap:.75rem;}
+.adm-topbar-left{display:flex;align-items:center;gap:.75rem;}
 .adm-topbar-title{font-size:1rem;font-weight:700;color:#111827;}
-.adm-content{padding:2rem;flex:1;}
+.adm-content{padding:1.5rem;flex:1;}
+
+/* ── Hamburger ── */
+.adm-hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:36px;height:36px;gap:5px;background:none;border:1.5px solid #e5e7eb;border-radius:.5rem;cursor:pointer;flex-shrink:0;padding:6px;transition:border-color .2s;}
+.adm-hamburger:hover{border-color:#4f46e5;}
+.adm-hamburger span{display:block;width:16px;height:2px;background:#374151;border-radius:2px;transition:all .25s;}
+.adm-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.adm-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.adm-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
 /* ── Utilities ── */
 .adm-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;box-shadow:0 1px 4px rgba(0,0,0,.05);}
@@ -47,16 +60,26 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 .adm-btn-outline{background:#fff;color:#374151;border:1.5px solid #e5e7eb;}
 .adm-btn-outline:hover{border-color:#a5b4fc;color:#4f46e5;}
 .adm-btn-sm{padding:.3rem .7rem;font-size:.78rem;}
-.adm-input{border:1.5px solid #e5e7eb;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;outline:none;font-family:inherit;transition:border-color .15s;background:#fff;color:#111827;}
+.adm-input{border:1.5px solid #e5e7eb;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;outline:none;font-family:inherit;transition:border-color .15s;background:#fff;color:#111827;width:100%;}
 .adm-input:focus{border-color:#4f46e5;}
 .adm-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .5rem center;background-size:1rem;padding-right:2rem;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* ── Modal ── */
-.adm-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;}
+.adm-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;padding:1rem;}
 .adm-modal-bg.open{display:flex;}
-.adm-modal{background:#fff;border-radius:1.25rem;width:440px;max-width:calc(100vw - 2rem);padding:1.75rem;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.adm-modal{background:#fff;border-radius:1.25rem;width:440px;max-width:100%;padding:1.75rem;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .adm-modal-title{font-size:1rem;font-weight:700;color:#111827;margin-bottom:1.25rem;}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .adm-sidebar{transform:translateX(-100%);}
+  .adm-sidebar.open{transform:translateX(0);}
+  .adm-main{margin-left:0;}
+  .adm-hamburger{display:flex;}
+  .adm-content{padding:1rem;}
+  .adm-topbar{padding:0 1rem;}
+}
 </style>
 </head>
 <body>
@@ -111,10 +134,19 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
     </div>
 </aside>
 
+{{-- ── Sidebar overlay (mobile) ── --}}
+<div class="adm-overlay" id="adm-overlay" onclick="admCloseSidebar()"></div>
+
 {{-- ── Main content area ── --}}
 <div class="adm-main">
     <header class="adm-topbar">
-        <span class="adm-topbar-title">@yield('page-title', 'Admin Panel')</span>
+        <div class="adm-topbar-left">
+            {{-- Hamburger (mobile only) --}}
+            <button class="adm-hamburger" id="adm-hamburger" aria-label="Toggle sidebar" onclick="admToggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
+            <span class="adm-topbar-title">@yield('page-title', 'Admin Panel')</span>
+        </div>
 
         {{-- Topbar user dropdown --}}
         <style>
@@ -199,6 +231,34 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
             if (menu && !e.target.closest('[onclick*="adm-user-menu"]') && !menu.contains(e.target)) {
                 menu.style.display = 'none';
             }
+        });
+
+        // ── Mobile sidebar toggle ──────────────────────────────────────────
+        function admToggleSidebar() {
+            const sidebar  = document.querySelector('.adm-sidebar');
+            const overlay  = document.getElementById('adm-overlay');
+            const hamburger = document.getElementById('adm-hamburger');
+            const isOpen   = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+                hamburger.classList.remove('open');
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('open');
+                hamburger.classList.add('open');
+            }
+        }
+        function admCloseSidebar() {
+            document.querySelector('.adm-sidebar').classList.remove('open');
+            document.getElementById('adm-overlay').classList.remove('open');
+            document.getElementById('adm-hamburger').classList.remove('open');
+        }
+        // Close sidebar when a nav link is clicked (mobile UX)
+        document.querySelectorAll('.adm-nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) admCloseSidebar();
+            });
         });
     </script>
 
