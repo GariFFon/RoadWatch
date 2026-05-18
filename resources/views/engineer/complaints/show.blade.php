@@ -17,7 +17,7 @@
 {{-- Loading skeleton --}}
 <div id="detail-loading" style="display:flex;flex-direction:column;gap:1.25rem;">
     <div style="background:#f3f4f6;border-radius:1rem;height:140px;animation:pulse 1.4s infinite;"></div>
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.25rem;">
+    <div class="eng-detail-grid" style="display:grid;grid-template-columns:1fr 340px;gap:1.25rem;">
         <div style="background:#f3f4f6;border-radius:1rem;height:260px;animation:pulse 1.4s infinite .05s;"></div>
         <div style="background:#f3f4f6;border-radius:1rem;height:260px;animation:pulse 1.4s infinite .1s;"></div>
     </div>
@@ -27,13 +27,13 @@
 <div id="detail-content" style="display:none;">
 
     {{-- Header card --}}
-    <div class="eng-card" style="padding:1.75rem;margin-bottom:1.5rem;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+    <div class="eng-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
             <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;">
-                    <span id="d-category-icon" style="font-size:1.75rem;"></span>
-                    <div>
-                        <h1 id="d-title" style="font-size:1.375rem;font-weight:800;color:#111827;margin:0;"></h1>
+                <div style="display:flex;align-items:center;gap:.625rem;margin-bottom:.625rem;flex-wrap:wrap;">
+                    <span id="d-category-icon" style="font-size:1.5rem;flex-shrink:0;"></span>
+                    <div style="min-width:0;">
+                        <h1 id="d-title" style="font-size:1.25rem;font-weight:800;color:#111827;margin:0;word-break:break-word;"></h1>
                         <p id="d-number" style="font-size:.8125rem;color:#9ca3af;margin:.1rem 0 0;"></p>
                     </div>
                 </div>
@@ -43,20 +43,20 @@
                     <span id="d-category-badge"></span>
                 </div>
             </div>
-            {{-- Status update panel --}}
-            <div id="status-update-panel" style="flex-shrink:0;"></div>
+            {{-- Status update panel (READ ONLY badge on mobile) --}}
+            <div id="status-update-panel" style="flex-shrink:0;margin-top:.25rem;"></div>
         </div>
-        <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #f3f4f6;display:flex;gap:2rem;flex-wrap:wrap;">
-            <div><p style="font-size:.72rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Location</p>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f3f4f6;display:flex;gap:1.25rem;flex-wrap:wrap;">
+            <div><p style="font-size:.7rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem;">Location</p>
                  <p id="d-location" style="font-size:.875rem;font-weight:600;color:#374151;"></p></div>
-            <div><p style="font-size:.72rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Reported By</p>
+            <div><p style="font-size:.7rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem;">Reported By</p>
                  <p id="d-reporter" style="font-size:.875rem;font-weight:600;color:#374151;"></p></div>
-            <div><p style="font-size:.72rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Filed On</p>
+            <div><p style="font-size:.7rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem;">Filed On</p>
                  <p id="d-date" style="font-size:.875rem;font-weight:600;color:#374151;"></p></div>
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;">
+    <div class="eng-detail-grid" style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;">
 
         {{-- Left: description + before media + after media + timeline --}}
         <div style="display:flex;flex-direction:column;gap:1.5rem;">
@@ -91,7 +91,7 @@
         </div>
 
         {{-- Right: upload evidence + status update + citizen --}}
-        <div id="right-col" style="position:sticky;top:76px;display:flex;flex-direction:column;gap:1.25rem;">
+        <div id="right-col" class="eng-detail-right" style="display:flex;flex-direction:column;gap:1.25rem;">
 
             {{-- Upload Work Evidence --}}
             <div class="eng-card" style="padding:1.5rem;" id="upload-card">
@@ -186,6 +186,49 @@
 .timeline-step::before{content:'';position:absolute;left:11px;top:24px;bottom:-1px;width:2px;background:#f3f4f6;}
 .timeline-step:last-child::before{display:none;}
 .timeline-dot{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;margin-top:.125rem;}
+
+/* ── Mobile responsive ── */
+/* Desktop default: sticky right column */
+.eng-detail-right{position:sticky;top:76px;}
+
+@media(max-width:768px){
+  /* Stack two-column layout */
+  .eng-detail-grid{
+    grid-template-columns:1fr !important;
+  }
+  /* Right col: remove sticky, flow naturally below left col */
+  .eng-detail-right{
+    position:static !important;
+    top:auto !important;
+  }
+
+  /* Header title smaller */
+  #d-title{
+    font-size:1.0625rem !important;
+  }
+  /* Status badge wraps properly */
+  #status-update-panel{
+    width:100%;
+    margin-top:.5rem;
+  }
+  /* Media grids: 2 cols on mobile */
+  #d-before-media,
+  #d-after-media{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+  /* Upload preview grid */
+  #preview-grid{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+  /* Confirm modal buttons stack */
+  #confirm-modal .eng-modal > div:last-child{
+    flex-direction:column;
+  }
+  #confirm-modal .eng-btn{
+    width:100%;
+    justify-content:center;
+  }
+}
 </style>
 
 <script>
