@@ -355,14 +355,14 @@ async function loadComplaints() {
 // ── Load engineers list for modal ──
 async function loadEngineers() {
     try {
-        const res = await axios.get('/api/v1/admin/users', {params:{role:'engineer',per_page:100}});
-        engineers = (res.data.data ?? res.data).filter(u => u.role === 'engineer');
+        const res = await axios.get('/api/v1/admin/users', {params:{role:'engineer',per_page:200}});
+        engineers = res.data.data ?? res.data;
         const sel = document.getElementById('engineer-select');
         sel.innerHTML = engineers.length
             ? '<option value="">— Select engineer —</option>' + engineers.map(e => `<option value="${e.id}">👷 ${esc(e.name)} (${esc(e.email)})</option>`).join('')
-            : '<option value="">No engineers available</option>';
+            : '<option value="">No engineers found — add an engineer user first</option>';
     } catch(_) {
-        document.getElementById('engineer-select').innerHTML = '<option>Failed to load</option>';
+        document.getElementById('engineer-select').innerHTML = '<option>Failed to load engineers</option>';
     }
 }
 

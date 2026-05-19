@@ -7,10 +7,20 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $users = User::select('id','name','email','role','phone','is_active','created_at')
-            ->latest()->paginate(25);
+        $query = User::select('id','name','email','role','phone','is_active','created_at')
+            ->latest();
+
+        // Optional role filter — used by the assign-engineer dropdown
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Use a high limit (no pagination) so engineers list is always complete
+        $perPage = min((int) ($request->per_page ?? 200), 200);
+        $users = $query->paginate($perPage);
+
         return response()->json($users);
     }
 

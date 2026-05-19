@@ -39,8 +39,17 @@ class ComplaintController extends Controller
     public function assign(Request $request, Complaint $complaint): JsonResponse
     {
         $data = $request->validate([
-            'engineer_id' => ['required', 'exists:users,id'],
+            'engineer_id' => ['required', 'exists:users,id', 'integer'],
         ]);
+
+        // Ensure the selected user is actually an engineer
+        $engineer = \App\Models\User::where('id', $data['engineer_id'])
+                                    ->where('role', 'engineer')
+                                    ->first();
+        if (!$engineer) {
+            return response()->json(['message' => 'Selected user is not an engineer.'], 422);
+        }
+
         $complaint->update(['assigned_to' => $data['engineer_id']]);
         return response()->json(['message' => 'Complaint assigned successfully.']);
     }
