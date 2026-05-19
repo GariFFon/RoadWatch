@@ -657,6 +657,10 @@ function openConfirm() {
 }
 function closeConfirm() {
     document.getElementById('confirm-modal').classList.remove('open');
+    // Always reset button so it's fresh next time the modal opens
+    const btn = document.getElementById('confirm-btn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirm Update'; }
+    document.getElementById('confirm-error').style.display = 'none';
     pendingNewStatus = null; pendingRemarks = null;
 }
 document.getElementById('confirm-modal').addEventListener('click', e => {
@@ -672,15 +676,14 @@ async function executeUpdate() {
             remarks: pendingRemarks,
         });
         closeConfirm();
-        loadDetail(); // refresh page data
+        loadDetail(); // refresh complaint data without a full page reload
     } catch(e) {
         const msg = e.response?.data?.message ?? 'Update failed.';
-        // If the complaint status changed since page load, reload to get fresh data
-        if (msg.includes('Cannot transition') && msg.includes(pendingNewStatus) &&
-            msg.startsWith(`Cannot transition from [${pendingNewStatus}]`) ||
+        // If status already changed (stale page), reload silently
+        if ((msg.includes('Cannot transition') && msg.includes(pendingNewStatus)) ||
             msg.includes('already in')) {
             closeConfirm();
-            loadDetail(); // reload — status was already updated (stale page data)
+            loadDetail();
             return;
         }
         document.getElementById('confirm-error').textContent = msg;
