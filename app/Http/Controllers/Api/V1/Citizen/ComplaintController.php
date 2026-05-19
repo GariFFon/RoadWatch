@@ -52,7 +52,6 @@ class ComplaintController extends Controller
             'videos.*'     => ['file', 'mimes:mp4,mov,webm', 'max:51200'],
         ]);
 
-        try {
         $complaint = DB::transaction(function () use ($validated, $request) {
 
             $disk = config('filesystems.default'); // 'public' locally, 's3' in production
@@ -117,21 +116,6 @@ class ComplaintController extends Controller
             'message'   => 'Complaint submitted successfully.',
             'complaint' => new ComplaintResource($complaint->load('category')),
         ], 201);
-
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Complaint store failed', [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            // TEMP DEBUG — remove before stable release
-            return response()->json([
-                'message' => 'Server error: ' . $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
-            ], 500);
-        }
     }
 
     /**

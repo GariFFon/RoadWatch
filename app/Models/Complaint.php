@@ -154,10 +154,20 @@ class Complaint extends Model
 
     public static function generateComplaintNumber(): string
     {
-        $year   = now()->format('Y');
-        $latest = static::whereYear('created_at', $year)->count() + 1;
-        return 'RW-' . $year . '-' . str_pad($latest, 5, '0', STR_PAD_LEFT);
-        // e.g. RW-2025-00042
+        $year = now()->format('Y');
+
+        // Use MAX() on the numeric suffix — not COUNT() — so deleted complaints
+        // or previously rolled-back records that left a gap never cause a duplicate.
+        // lockForUpdate() serialises concurrent requests inside the wrapping transaction.
+        $maxSeq = static::whereYear('created_at', $year)
+            ->where('complaint_number', 'like', "RW-{$year}-%")
+            ->lockForUpdate()
+            ->max(DB::raw("CAST(SUBSTRING_INDEX(complaint_number, '-', -1) AS UNSIGNED)"));
+
+        $next = ($maxSeq ?? 0) + 1;
+
+        return 'RW-' . $year . '-' . str_pad($next, 5, '0', STR_PAD_LEFT);
+        // e.g. RW-2026-00003
     }
 
     // -------------------------------------------------------------------------
