@@ -136,8 +136,45 @@
                     <div id="so-meta" style="display:flex;flex-direction:column;gap:.5rem;"></div>
                 </div>
                 <div style="background:#fff;border-radius:1rem;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);">
-                    <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0;padding:.875rem 1.125rem .5rem;">📍 Location</p>
-                    <div id="so-map" style="height:200px;"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.125rem .5rem;">
+                        <p style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin:0;">📍 Location</p>
+                        <a id="so-gmaps-btn" href="#" target="_blank" rel="noopener"
+                           style="display:none;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;
+                                  color:#4f46e5;text-decoration:none;background:#eef2ff;border:1px solid #c7d2fe;
+                                  border-radius:.5rem;padding:.25rem .625rem;transition:background .15s;"
+                           onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#eef2ff'">
+                            🗺️ Google Maps
+                        </a>
+                    </div>
+                    {{-- Map (clickable) --}}
+                    <div id="so-map-wrap" style="position:relative;cursor:default;">
+                        <div id="so-map" style="height:200px;"></div>
+                        {{-- Click-to-open overlay --}}
+                        <div id="so-map-overlay"
+                             style="display:none;position:absolute;inset:0;z-index:500;cursor:pointer;"
+                             title="Click to open in Google Maps"
+                             onclick="window.open(document.getElementById('so-gmaps-btn').href,'_blank')"
+                        ></div>
+                    </div>
+                    {{-- Coordinate chips --}}
+                    <div id="so-coords-row" style="display:none;padding:.625rem .875rem;border-top:1px solid #f3f4f6;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:.25rem;background:#f8fafc;border:1px solid #e5e7eb;border-radius:.5rem;padding:.3rem .625rem;">
+                            <span style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;">Lat</span>
+                            <span id="so-coord-lat" style="font-size:.8125rem;font-weight:700;color:#111827;font-variant-numeric:tabular-nums;"></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:.25rem;background:#f8fafc;border:1px solid #e5e7eb;border-radius:.5rem;padding:.3rem .625rem;">
+                            <span style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;">Lng</span>
+                            <span id="so-coord-lng" style="font-size:.8125rem;font-weight:700;color:#111827;font-variant-numeric:tabular-nums;"></span>
+                        </div>
+                        <a id="so-navigate-btn" href="#" target="_blank" rel="noopener"
+                           style="margin-left:auto;display:inline-flex;align-items:center;gap:.3rem;
+                                  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+                                  border-radius:.5rem;padding:.35rem .75rem;font-size:.75rem;font-weight:700;
+                                  text-decoration:none;box-shadow:0 2px 6px rgba(79,70,229,.25);transition:opacity .15s;"
+                           onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                            📍 Navigate
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -513,6 +550,46 @@ async function openDetail(id) {
         // ── Description ──────────────────────────────────────────────────────
         document.getElementById('so-description').textContent = c.description ?? '—';
 
+        // ── Map, coordinates & Google Maps links ──
+        if (c.latitude && c.longitude) {
+            const lat = parseFloat(c.latitude).toFixed(6);
+            const lng = parseFloat(c.longitude).toFixed(6);
+            const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&z=17`;
+            const navUrl  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+            // Coord chips
+            document.getElementById('so-coord-lat').textContent = lat;
+            document.getElementById('so-coord-lng').textContent = lng;
+            document.getElementById('so-coords-row').style.display = 'flex';
+
+            // Buttons
+            const gmBtn = document.getElementById('so-gmaps-btn');
+            gmBtn.href = mapsUrl;
+            gmBtn.style.display = 'inline-flex';
+
+            document.getElementById('so-navigate-btn').href = navUrl;
+
+            // Click overlay on map
+            document.getElementById('so-map-overlay').style.display = 'block';
+
+            // Leaflet map
+            setTimeout(() => {
+                if (soMap) { soMap.remove(); soMap = null; }
+                soMap = L.map('so-map', {zoomControl:false, dragging:false, scrollWheelZoom:false})
+                          .setView([c.latitude, c.longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {attribution:'© OpenStreetMap'}).addTo(soMap);
+                L.marker([c.latitude, c.longitude]).addTo(soMap)
+                 .bindPopup(`<strong>${esc(c.title)}</strong><br>${esc(c.location)}<br><a href="${mapsUrl}" target="_blank" style="color:#4f46e5;font-weight:600;">Open in Google Maps ↗</a>`)
+                 .openPopup();
+            }, 50);
+        } else {
+            document.getElementById('so-map').innerHTML =
+                '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.8rem;">📍 No location data</div>';
+            document.getElementById('so-coords-row').style.display = 'none';
+            document.getElementById('so-gmaps-btn').style.display  = 'none';
+        }
+
         // ── Meta rows ────────────────────────────────────────────────────────
         document.getElementById('so-meta').innerHTML = [
             ['📍 Location',    c.location??'—'],
@@ -527,8 +604,28 @@ async function openDetail(id) {
                 <span style="color:#111827;font-size:.8125rem;font-weight:600;text-align:right;max-width:55%;word-break:break-word;">${esc(String(v))}</span>
             </div>`).join('');
 
-        // ── Leaflet mini-map ─────────────────────────────────────────────────
+        // ── Map, coordinates & Google Maps links ──────────────────────────────
         if (c.latitude && c.longitude) {
+            const lat = parseFloat(c.latitude).toFixed(6);
+            const lng = parseFloat(c.longitude).toFixed(6);
+            const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&z=17`;
+            const navUrl  = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+            // Coordinate chips
+            document.getElementById('so-coord-lat').textContent = lat;
+            document.getElementById('so-coord-lng').textContent = lng;
+            document.getElementById('so-coords-row').style.display = 'flex';
+
+            // Buttons
+            const gmBtn = document.getElementById('so-gmaps-btn');
+            gmBtn.href = mapsUrl;
+            gmBtn.style.display = 'inline-flex';
+            document.getElementById('so-navigate-btn').href = navUrl;
+
+            // Enable click overlay on map
+            document.getElementById('so-map-overlay').style.display = 'block';
+
+            // Leaflet map
             setTimeout(() => {
                 if (soMap) { soMap.remove(); soMap = null; }
                 soMap = L.map('so-map', {zoomControl:false, dragging:false, scrollWheelZoom:false})
@@ -536,12 +633,17 @@ async function openDetail(id) {
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                     {attribution:'© OpenStreetMap'}).addTo(soMap);
                 L.marker([c.latitude, c.longitude]).addTo(soMap)
-                 .bindPopup(`<strong>${esc(c.title)}</strong><br>${esc(c.location)}`).openPopup();
+                 .bindPopup(`<strong>${esc(c.title)}</strong><br>${esc(c.location)}<br><a href="${mapsUrl}" target="_blank" style="color:#4f46e5;font-weight:600;">Open in Google Maps ↗</a>`)
+                 .openPopup();
             }, 50);
         } else {
             document.getElementById('so-map').innerHTML =
-                '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.8rem;">No location data</div>';
+                '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:.8rem;">📍 No GPS coordinates recorded</div>';
+            document.getElementById('so-coords-row').style.display = 'none';
+            document.getElementById('so-gmaps-btn').style.display  = 'none';
+            document.getElementById('so-map-overlay').style.display = 'none';
         }
+
 
         // ── Status Timeline ───────────────────────────────────────────────────
         const timeline = c.status_histories ?? [];

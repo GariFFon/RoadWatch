@@ -45,7 +45,7 @@ class ComplaintController extends Controller
             'longitude'    => ['required', 'numeric', 'between:-180,180'],
             'location'     => ['required', 'string', 'max:500'],
             'is_anonymous' => ['boolean'],
-            'images'       => ['nullable', 'array', 'max:5'],
+            'images'       => ['required', 'array', 'min:1', 'max:5'],
             'images.*'     => ['file', 'mimes:jpg,jpeg,png,webp,heic', 'max:10240'],
             'videos'       => ['nullable', 'array', 'max:2'],
             'videos.*'     => ['file', 'mimes:mp4,mov,webm', 'max:51200'],

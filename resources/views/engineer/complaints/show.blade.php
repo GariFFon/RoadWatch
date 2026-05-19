@@ -61,6 +61,58 @@
         {{-- Left: description + before media + after media + timeline --}}
         <div style="display:flex;flex-direction:column;gap:1.5rem;">
 
+            {{-- Location & Map --}}
+            <div class="eng-card" style="padding:1.5rem;" id="location-map-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
+                    <h2 style="font-size:.9375rem;font-weight:700;color:#111827;">📍 Location & Map</h2>
+                    <a id="gmaps-link" href="#" target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;gap:.375rem;font-size:.8125rem;font-weight:600;
+                              color:#0ea5e9;text-decoration:none;background:#f0f9ff;border:1.5px solid #7dd3fc;
+                              border-radius:.625rem;padding:.35rem .75rem;transition:all .15s;"
+                       onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
+                        🗺️ Open in Google Maps
+                    </a>
+                </div>
+
+                {{-- Map embed --}}
+                <div id="map-embed-wrap" style="width:100%;border-radius:.875rem;overflow:hidden;background:#f3f4f6;position:relative;">
+                    <div style="padding-bottom:52%;position:relative;">
+                        <iframe id="map-iframe"
+                                style="position:absolute;inset:0;width:100%;height:100%;border:0;"
+                                allowfullscreen loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                src="">
+                        </iframe>
+                    </div>
+                </div>
+
+                {{-- Coordinates row --}}
+                <div id="map-coords" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.875rem;">
+                    <div style="flex:1;min-width:120px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:.625rem;padding:.625rem .875rem;">
+                        <p style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Latitude</p>
+                        <p id="coord-lat" style="font-size:.9rem;font-weight:700;color:#111827;font-variant-numeric:tabular-nums;"></p>
+                    </div>
+                    <div style="flex:1;min-width:120px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:.625rem;padding:.625rem .875rem;">
+                        <p style="font-size:.68rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Longitude</p>
+                        <p id="coord-lng" style="font-size:.9rem;font-weight:700;color:#111827;font-variant-numeric:tabular-nums;"></p>
+                    </div>
+                    <a id="gmaps-coord-btn" href="#" target="_blank" rel="noopener"
+                       style="display:inline-flex;align-items:center;justify-content:center;gap:.375rem;
+                              flex:1;min-width:140px;background:linear-gradient(135deg,#0ea5e9,#6366f1);
+                              color:#fff;border-radius:.625rem;padding:.625rem .875rem;
+                              font-size:.8125rem;font-weight:700;text-decoration:none;
+                              box-shadow:0 2px 8px rgba(14,165,233,.25);transition:opacity .15s;"
+                       onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                        📍 Navigate Here
+                    </a>
+                </div>
+
+                {{-- No coordinates fallback --}}
+                <div id="map-no-coords" style="display:none;text-align:center;padding:1.5rem;color:#9ca3af;font-size:.875rem;">
+                    📍 No GPS coordinates recorded for this complaint.
+                </div>
+            </div>
+
             {{-- Description --}}
             <div class="eng-card" style="padding:1.5rem;">
                 <h2 style="font-size:.9375rem;font-weight:700;color:#111827;margin-bottom:.875rem;">📝 Description</h2>
@@ -292,6 +344,39 @@ async function loadDetail() {
 
         // ── Description ──
         document.getElementById('d-description').textContent = c.description ?? 'No description provided.';
+
+        // ── Map & Coordinates ──
+        const lat = c.latitude;
+        const lng = c.longitude;
+        if (lat && lng) {
+            const latNum = parseFloat(lat).toFixed(6);
+            const lngNum = parseFloat(lng).toFixed(6);
+            const mapsUrl = `https://www.google.com/maps?q=${latNum},${lngNum}&z=17`;
+            const navUrl  = `https://www.google.com/maps/dir/?api=1&destination=${latNum},${lngNum}`;
+
+            // Populate coords
+            document.getElementById('coord-lat').textContent = latNum;
+            document.getElementById('coord-lng').textContent = lngNum;
+
+            // Google Maps link buttons
+            document.getElementById('gmaps-link').href = mapsUrl;
+            document.getElementById('gmaps-coord-btn').href = navUrl;
+
+            // Embed iframe (OpenStreetMap — no API key needed)
+            const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.002},${lat-0.002},${lng+0.002},${lat+0.002}&layer=mapnik&marker=${latNum},${lngNum}`;
+            document.getElementById('map-iframe').src = embedUrl;
+
+            // Make whole map wrap clickable to Google Maps
+            document.getElementById('map-embed-wrap').style.cursor = 'pointer';
+            document.getElementById('map-embed-wrap').title = 'Click to open in Google Maps';
+            document.getElementById('map-embed-wrap').onclick = () => window.open(mapsUrl, '_blank');
+        } else {
+            // No coords — hide map, show fallback
+            document.getElementById('map-embed-wrap').style.display = 'none';
+            document.getElementById('map-coords').style.display = 'none';
+            document.getElementById('map-no-coords').style.display = 'block';
+            document.getElementById('gmaps-link').style.display = 'none';
+        }
 
         // ── Media: split before / after ──
         const before = (c.media??[]).filter(m => m.stage === 'before');

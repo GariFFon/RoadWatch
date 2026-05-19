@@ -111,11 +111,11 @@
                 <h2 class="rw-step-title">Attach photos / videos</h2>
             </div>
             <p style="font-size:0.875rem; color:#6b7280; margin-bottom:1rem; margin-top:-0.5rem;">
-                Photos help engineers assess the severity faster.
+                At least <strong>one photo</strong> of the site is required. Videos are optional but help engineers assess severity faster.
             </p>
             <div style="margin-bottom:1.25rem;">
-                <label class="rw-label">Photos
-                    <span style="color:#9ca3af; font-weight:400;">(up to 5 · JPG, PNG, WEBP · max 10MB each)</span>
+                <label class="rw-label">Photos <span style="color:#ef4444;">*</span>
+                    <span style="color:#9ca3af; font-weight:400;">(1–5 required · JPG, PNG, WEBP · max 10MB each)</span>
                 </label>
                 <label id="photo-drop-zone" class="rw-upload-zone">
                     <div style="text-align:center;">
@@ -127,10 +127,11 @@
                            multiple accept=".jpg,.jpeg,.png,.webp,.heic" onchange="previewImages(this)">
                 </label>
                 <div id="image-previews" style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-top:0.75rem;"></div>
+                <p id="error-images" style="display:none;" class="rw-error">⚠ Please upload at least one photo of the site</p>
             </div>
             <div>
                 <label class="rw-label">Videos
-                    <span style="color:#9ca3af; font-weight:400;">(up to 2 · MP4, MOV · max 50MB each)</span>
+                    <span style="color:#9ca3af; font-weight:400;">(optional · up to 2 · MP4, MOV · max 50MB each)</span>
                 </label>
                 <label id="video-drop-zone" class="rw-upload-zone" style="padding:1.25rem;">
                     <div style="text-align:center;">
@@ -322,7 +323,10 @@ document.addEventListener('DOMContentLoaded', function () {
             r.onload = e => { c.innerHTML += `<div style="position:relative;"><img src="${e.target.result}" style="height:80px;width:100%;object-fit:cover;border-radius:0.5rem;border:1px solid #e5e7eb;"><p style="font-size:0.65rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0.2rem 0 0;">${file.name}</p></div>`; };
             r.readAsDataURL(file);
         });
-        if (input.files.length > 0) document.getElementById('photo-drop-zone').style.borderColor = '#818cf8';
+        if (input.files.length > 0) {
+            document.getElementById('photo-drop-zone').style.borderColor = '#818cf8';
+            document.getElementById('error-images').style.display = 'none'; // clear error once files chosen
+        }
     };
     window.previewVideos = function (input) {
         const c = document.getElementById('video-names'); c.innerHTML = '';
@@ -345,6 +349,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!document.getElementById('latitude').value) {
             document.getElementById('error-latitude').style.display = 'block';
             document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+        if (document.getElementById('images').files.length === 0) {
+            const photoErr = document.getElementById('error-images');
+            photoErr.style.display = 'block';
+            document.getElementById('photo-drop-zone').style.borderColor = '#ef4444';
+            photoErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
