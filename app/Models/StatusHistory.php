@@ -55,8 +55,11 @@ class StatusHistory extends Model
                 ? $previousLog->created_at
                 : optional(Complaint::find($log->complaint_id))->created_at;
 
+            // abs() is critical: MySQL UNSIGNED INT rejects negatives (strict mode).
+            // Carbon 3.x changed diffInSeconds() default to absolute=false, unlike
+            // Carbon 2.x. Any clock/timezone drift between app & DB can flip the sign.
             $log->time_in_previous_status = $since
-                ? (int) now()->diffInSeconds($since)
+                ? abs((int) now()->diffInSeconds($since))
                 : null;
         });
     }
@@ -133,12 +136,13 @@ class StatusHistory extends Model
     public function getNewStatusColorAttribute(): string
     {
         return match ($this->new_status) {
-            Complaint::STATUS_PENDING      => 'yellow',
-            Complaint::STATUS_UNDER_REVIEW => 'blue',
-            Complaint::STATUS_IN_PROGRESS  => 'indigo',
-            Complaint::STATUS_RESOLVED     => 'green',
-            Complaint::STATUS_REJECTED     => 'red',
-            default                        => 'gray',
+            Complaint::STATUS_PENDING               => 'yellow',
+            Complaint::STATUS_UNDER_REVIEW          => 'blue',
+            Complaint::STATUS_IN_PROGRESS           => 'indigo',
+            Complaint::STATUS_AWAITING_VERIFICATION => 'orange',
+            Complaint::STATUS_VERIFIED              => 'green',
+            Complaint::STATUS_REJECTED              => 'red',
+            default                                 => 'gray',
         };
     }
 
@@ -171,7 +175,7 @@ class StatusHistory extends Model
             ->value('created_at');
 
         $resolved = static::where('complaint_id', $complaintId)
-            ->where('new_status', Complaint::STATUS_RESOLVED)
+            ->where('new_status', Complaint::STATUS_VERIFIED)
             ->value('created_at');
 
         if (! $first || ! $resolved) return null;
@@ -206,7 +210,8 @@ class StatusHistory extends Model
 
     public function scopeResolutions($query)
     {
-        return $query->where('new_status', Complaint::STATUS_RESOLVED);
+        // Verified = the terminal "resolved" state in this system
+        return $query->where('new_status', Complaint::STATUS_VERIFIED);
     }
 
     // -------------------------------------------------------------------------
@@ -216,12 +221,13 @@ class StatusHistory extends Model
     private function formatStatusLabel(string $status): string
     {
         return match ($status) {
-            Complaint::STATUS_PENDING      => 'Pending',
-            Complaint::STATUS_UNDER_REVIEW => 'Under Review',
-            Complaint::STATUS_IN_PROGRESS  => 'In Progress',
-            Complaint::STATUS_RESOLVED     => 'Resolved',
-            Complaint::STATUS_REJECTED     => 'Rejected',
-            default                        => ucwords(str_replace('_', ' ', $status)),
+            Complaint::STATUS_PENDING               => 'Pending',
+            Complaint::STATUS_UNDER_REVIEW          => 'Under Review',
+            Complaint::STATUS_IN_PROGRESS           => 'In Progress',
+            Complaint::STATUS_AWAITING_VERIFICATION => 'Awaiting Verification',
+            Complaint::STATUS_VERIFIED              => 'Verified',
+            Complaint::STATUS_REJECTED              => 'Rejected',
+            default                                 => ucwords(str_replace('_', ' ', $status)),
         };
     }
 }

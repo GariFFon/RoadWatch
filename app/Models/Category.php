@@ -138,12 +138,12 @@ class Category extends Model
     }
 
     /**
-     * Only resolved complaints in this category.
+     * Only resolved (verified) complaints in this category.
      */
     public function resolvedComplaints(): HasMany
     {
         return $this->hasMany(Complaint::class)
-                    ->where('status', Complaint::STATUS_RESOLVED);
+                    ->where('status', Complaint::STATUS_VERIFIED);
     }
 
     // -------------------------------------------------------------------------

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Complaint extends Model
@@ -354,25 +355,29 @@ class Complaint extends Model
         }
 
         $old = $this->status;
-        $this->update(['status' => $newStatus]);
 
-        // Auto-timestamp when engineer marks work done (awaiting admin verification)
-        if ($newStatus === self::STATUS_AWAITING_VERIFICATION) {
-            $this->update(['resolved_at' => now()]);
-        }
-        // Clear resolved_at if admin sends work back to in_progress
-        if ($newStatus === self::STATUS_IN_PROGRESS && $old === self::STATUS_AWAITING_VERIFICATION) {
-            $this->update(['resolved_at' => null]);
-        }
+        DB::transaction(function () use ($newStatus, $old, $changedBy, $remarks) {
+            $this->update(['status' => $newStatus]);
 
-        // Write to status_histories audit log
-        $this->statusHistories()->create([
-            'changed_by' => $changedBy->id,
-            'old_status' => $old,
-            'new_status' => $newStatus,
-            'remarks'    => $remarks,
-        ]);
+            // Auto-timestamp when engineer marks work done (awaiting admin verification)
+            if ($newStatus === self::STATUS_AWAITING_VERIFICATION) {
+                $this->update(['resolved_at' => now()]);
+            }
+            // Clear resolved_at if admin sends work back to in_progress
+            if ($newStatus === self::STATUS_IN_PROGRESS && $old === self::STATUS_AWAITING_VERIFICATION) {
+                $this->update(['resolved_at' => null]);
+            }
+
+            // Write to status_histories audit log (atomic with the status update)
+            $this->statusHistories()->create([
+                'changed_by' => $changedBy->id,
+                'old_status' => $old,
+                'new_status' => $newStatus,
+                'remarks'    => $remarks,
+            ]);
+        });
     }
+
 
     /**
      * Full status timeline — pass to view for complaint detail page.
@@ -493,7 +498,8 @@ class Complaint extends Model
 
     public function scopeResolved($query)
     {
-        return $query->where('status', self::STATUS_RESOLVED);
+        // STATUS_RESOLVED was removed — verified is the terminal "done" state
+        return $query->where('status', self::STATUS_VERIFIED);
     }
 
     public function scopeEmergency($query)
