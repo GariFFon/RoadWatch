@@ -8,6 +8,7 @@ use App\Models\ComplaintMedia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MediaController extends Controller
 {
@@ -35,7 +36,10 @@ class MediaController extends Controller
         foreach ($request->file('files') as $index => $file) {
             $isVideo = in_array($file->getMimeType(), ['video/mp4', 'video/quicktime', 'video/webm']);
             $folder  = $isVideo ? 'videos' : 'images';
-            $path    = $file->store("complaints/{$complaint->id}/{$folder}", $disk);
+            $ext     = $file->getClientOriginalExtension() ?: ($isVideo ? 'mp4' : 'jpg');
+            $path    = "complaints/{$complaint->id}/{$folder}/" . Str::random(20) . ".{$ext}";
+            // Upload without ACL — bucket uses a public Bucket Policy instead.
+            Storage::disk($disk)->put($path, file_get_contents($file));
 
             $media = ComplaintMedia::create([
                 'complaint_id'  => $complaint->id,
@@ -47,7 +51,7 @@ class MediaController extends Controller
                 'size_bytes'    => $file->getSize(),
                 'cloud_disk'    => $disk,
                 'cloud_path'    => $path,
-                'cloud_url'     => Storage::disk($disk)->url($path),
+                'cloud_url'     => $this->buildPublicUrl($disk, $path),
                 'sort_order'    => $existing + $index,
             ]);
 
@@ -75,5 +79,22 @@ class MediaController extends Controller
         $media->delete();
 
         return response()->json(['message' => 'Media deleted.']);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function buildPublicUrl(string $disk, string $path): string
+    {
+        if ($disk === 's3') {
+            $customUrl = config('filesystems.disks.s3.url');
+            if ($customUrl) {
+                return rtrim($customUrl, '/') . '/' . $path;
+            }
+            $bucket = config('filesystems.disks.s3.bucket');
+            $region = config('filesystems.disks.s3.region');
+            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+        }
+
+        return Storage::disk($disk)->url($path);
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ComplaintController extends Controller
 {
@@ -69,7 +70,11 @@ class ComplaintController extends Controller
             ]);
 
             foreach ($request->file('images', []) as $index => $file) {
-                $path = $file->store("complaints/{$complaint->id}/images", $disk);
+                $ext  = $file->getClientOriginalExtension() ?: 'jpg';
+                $path = "complaints/{$complaint->id}/images/" . Str::random(20) . ".{$ext}";
+                // Upload without ACL — bucket has Object Ownership enforced (ACLs disabled).
+                // Public read access is controlled by a Bucket Policy on the AWS console.
+                Storage::disk($disk)->put($path, file_get_contents($file));
                 ComplaintMedia::create([
                     'complaint_id'  => $complaint->id,
                     'uploaded_by'   => auth()->id(),
@@ -80,13 +85,15 @@ class ComplaintController extends Controller
                     'size_bytes'    => $file->getSize(),
                     'cloud_disk'    => $disk,
                     'cloud_path'    => $path,
-                    'cloud_url'     => Storage::disk($disk)->url($path),
+                    'cloud_url'     => $this->buildPublicUrl($disk, $path),
                     'sort_order'    => $index,
                 ]);
             }
 
             foreach ($request->file('videos', []) as $index => $file) {
-                $path = $file->store("complaints/{$complaint->id}/videos", $disk);
+                $ext  = $file->getClientOriginalExtension() ?: 'mp4';
+                $path = "complaints/{$complaint->id}/videos/" . Str::random(20) . ".{$ext}";
+                Storage::disk($disk)->put($path, file_get_contents($file));
                 ComplaintMedia::create([
                     'complaint_id'  => $complaint->id,
                     'uploaded_by'   => auth()->id(),
@@ -97,7 +104,7 @@ class ComplaintController extends Controller
                     'size_bytes'    => $file->getSize(),
                     'cloud_disk'    => $disk,
                     'cloud_path'    => $path,
-                    'cloud_url'     => Storage::disk($disk)->url($path),
+                    'cloud_url'     => $this->buildPublicUrl($disk, $path),
                     'sort_order'    => $index,
                 ]);
             }
@@ -149,5 +156,29 @@ class ComplaintController extends Controller
         $complaint->delete();
 
         return response()->json(['message' => 'Complaint deleted.'], 200);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Build a public URL for an uploaded file without relying on ACLs.
+     *
+     * - For S3: constructs the virtual-hosted URL directly so no ACL header
+     *   is sent (bucket uses a public Bucket Policy instead).
+     * - For local/public disk: delegates to Storage::url() which is fine.
+     */
+    private function buildPublicUrl(string $disk, string $path): string
+    {
+        if ($disk === 's3') {
+            $customUrl = config('filesystems.disks.s3.url');
+            if ($customUrl) {
+                return rtrim($customUrl, '/') . '/' . $path;
+            }
+            $bucket = config('filesystems.disks.s3.bucket');
+            $region = config('filesystems.disks.s3.region');
+            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
+        }
+
+        return Storage::disk($disk)->url($path);
     }
 }
