@@ -6,72 +6,216 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'Engineer') — RoadWatch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 @vite(['resources/css/app.css'])
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{overflow-x:hidden}
-body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;overflow-x:hidden}
+html{overflow-x:hidden;scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#f0f3fb;color:#111827;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;overflow-x:hidden}
 
-/* ── Sidebar ── */
-.eng-sidebar{width:230px;flex-shrink:0;background:#0f172a;min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .25s ease;}
-.eng-logo{display:flex;align-items:center;gap:.625rem;padding:1.375rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.07);}
-.eng-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#0ea5e9,#6366f1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.eng-logo-text{font-size:1rem;font-weight:800;color:#fff;}
-.eng-logo-badge{font-size:.6rem;font-weight:700;background:#0ea5e9;color:#fff;padding:.15rem .4rem;border-radius:4px;margin-left:.25rem;}
-.eng-nav{flex:1;padding:1rem .75rem;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;}
-.eng-nav-label{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;padding:.75rem .5rem .25rem;}
-.eng-nav-link{display:flex;align-items:center;gap:.625rem;padding:.625rem .875rem;border-radius:.625rem;font-size:.875rem;font-weight:500;color:rgba(255,255,255,.55);text-decoration:none;transition:background .15s,color .15s;}
-.eng-nav-link:hover{background:rgba(255,255,255,.07);color:#fff;}
-.eng-nav-link.active{background:rgba(14,165,233,.25);color:#fff;font-weight:600;}
-.eng-nav-link .icon{font-size:1rem;width:1.25rem;text-align:center;}
-.eng-footer{padding:1rem .75rem;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+/* ══════════════════════════════════════════
+   SIDEBAR  — teal/cyan accent theme
+══════════════════════════════════════════ */
+.eng-sidebar{
+  width:240px;flex-shrink:0;
+  background:linear-gradient(180deg,#0d1117 0%,#0f1923 55%,#0d1117 100%);
+  min-height:100vh;display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:200;
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  border-right:1px solid rgba(255,255,255,.05);
+}
+.eng-sidebar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#0ea5e9,#22d3ee,#06b6d4);
+  border-radius:0 0 4px 4px;
+}
+
+.eng-logo{
+  display:flex;align-items:center;gap:.75rem;
+  padding:1.5rem 1.25rem 1.25rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.eng-logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+  box-shadow:0 4px 15px rgba(14,165,233,.4);
+}
+.eng-logo-text{font-size:1.0625rem;font-weight:800;color:#fff;letter-spacing:-.01em;}
+.eng-logo-badge{
+  font-size:.58rem;font-weight:700;
+  background:rgba(14,165,233,.2);color:#7dd3fc;
+  padding:.15rem .45rem;border-radius:5px;margin-left:.25rem;
+  border:1px solid rgba(14,165,233,.3);letter-spacing:.05em;text-transform:uppercase;
+}
+
+.eng-nav{flex:1;padding:1rem .875rem;display:flex;flex-direction:column;gap:.125rem;overflow-y:auto;}
+.eng-nav::-webkit-scrollbar{width:3px}
+.eng-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+.eng-nav-label{
+  font-size:.625rem;font-weight:700;color:rgba(255,255,255,.25);
+  text-transform:uppercase;letter-spacing:.1em;
+  padding:.875rem .625rem .375rem;
+}
+
+.eng-nav-link{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.625rem .875rem;border-radius:.75rem;
+  font-size:.84375rem;font-weight:500;color:rgba(255,255,255,.5);
+  text-decoration:none;transition:all .2s ease;position:relative;
+  overflow:hidden;
+}
+.eng-nav-link::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.05);opacity:0;
+  transition:opacity .2s;border-radius:.75rem;
+}
+.eng-nav-link:hover{color:rgba(255,255,255,.9);}
+.eng-nav-link:hover::before{opacity:1;}
+.eng-nav-link:hover .eng-nav-icon{background:rgba(14,165,233,.15);}
+
+.eng-nav-link.active{
+  background:rgba(14,165,233,.15);color:#fff;font-weight:600;
+  box-shadow:inset 0 0 0 1px rgba(14,165,233,.25);
+}
+.eng-nav-link.active .eng-nav-icon{background:rgba(14,165,233,.25);color:#7dd3fc;}
+
+.eng-nav-icon{
+  width:28px;height:28px;border-radius:.5rem;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.06);
+  transition:background .2s,color .2s;font-size:.875rem;flex-shrink:0;
+}
+
+/* Count badge inside nav link */
+.eng-nav-count{
+  margin-left:auto;min-width:20px;height:20px;
+  background:rgba(16,185,129,.2);color:#34d399;
+  font-size:.6rem;font-weight:700;border-radius:9999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:0 .4rem;border:1px solid rgba(16,185,129,.2);
+}
+
+.eng-footer{
+  padding:1rem .875rem;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;
+}
 .eng-user-row{display:flex;align-items:center;gap:.625rem;}
-.eng-user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;flex-shrink:0;}
-.eng-signout{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.75rem;padding:.25rem;transition:color .15s;}
-.eng-signout:hover{color:#ef4444;}
+.eng-user-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.8125rem;font-weight:700;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(14,165,233,.4);
+}
+.eng-user-name{font-size:.8125rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.eng-user-role{font-size:.6875rem;color:rgba(255,255,255,.35);margin-top:.0625rem;}
+.eng-signout{
+  margin-left:auto;background:none;border:none;
+  color:rgba(255,255,255,.25);cursor:pointer;
+  padding:.375rem;border-radius:.5rem;
+  transition:all .2s;display:flex;align-items:center;
+}
+.eng-signout:hover{color:#f87171;background:rgba(248,113,113,.1);}
 
-/* ── Overlay (mobile) ── */
-.eng-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;backdrop-filter:blur(2px);}
+/* ══════════════════════════════════════════
+   OVERLAY (mobile)
+══════════════════════════════════════════ */
+.eng-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:190;backdrop-filter:blur(4px);}
 .eng-overlay.open{display:block;}
 
-/* ── Main ── */
-.eng-main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.eng-topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;gap:.75rem;}
-.eng-topbar-left{display:flex;align-items:center;gap:.75rem;}
-.eng-topbar-title{font-size:1rem;font-weight:700;color:#111827;}
-.eng-content{padding:1.5rem;flex:1;}
+/* ══════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════ */
+.eng-main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
 
-/* ── Hamburger ── */
-.eng-hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:36px;height:36px;gap:5px;background:none;border:1.5px solid #e5e7eb;border-radius:.5rem;cursor:pointer;flex-shrink:0;padding:6px;transition:border-color .2s;}
-.eng-hamburger:hover{border-color:#0ea5e9;}
+/* TOPBAR */
+.eng-topbar{
+  background:rgba(240,243,251,.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.7);
+  padding:0 1.75rem;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:40;gap:.75rem;
+}
+.eng-topbar-left{display:flex;align-items:center;gap:.875rem;}
+.eng-topbar-title{font-size:1.125rem;font-weight:700;color:#0a1628;letter-spacing:-.02em;}
+.eng-content{padding:1.75rem;flex:1;}
+
+/* HAMBURGER */
+.eng-hamburger{
+  display:none;flex-direction:column;justify-content:center;align-items:center;
+  width:38px;height:38px;gap:5px;background:rgba(255,255,255,.6);
+  border:1.5px solid rgba(255,255,255,.8);border-radius:.625rem;
+  cursor:pointer;flex-shrink:0;padding:6px;
+  transition:all .2s;backdrop-filter:blur(10px);
+}
+.eng-hamburger:hover{background:rgba(14,165,233,.1);border-color:#7dd3fc;}
 .eng-hamburger span{display:block;width:16px;height:2px;background:#374151;border-radius:2px;transition:all .25s;}
 .eng-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
 .eng-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
 .eng-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
-/* ── Utilities ── */
-.eng-card{background:#fff;border:1px solid #e5e7eb;border-radius:1rem;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+/* ══════════════════════════════════════════
+   CARD SYSTEM
+══════════════════════════════════════════ */
+.eng-card{
+  background:#fff;
+  border:1px solid rgba(228,232,246,.8);
+  border-radius:1.25rem;
+  box-shadow:0 2px 12px rgba(10,22,40,.05),0 1px 3px rgba(10,22,40,.04);
+  transition:box-shadow .25s;
+}
+.eng-card:hover{box-shadow:0 6px 24px rgba(10,22,40,.08),0 2px 6px rgba(10,22,40,.05);}
+
+/* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
 .eng-badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:700;padding:.2rem .625rem;border-radius:9999px;}
-.eng-btn{display:inline-flex;align-items:center;gap:.375rem;border-radius:.625rem;padding:.5rem 1rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
-.eng-btn-primary{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;box-shadow:0 2px 8px rgba(14,165,233,.3);}
-.eng-btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+.eng-btn{display:inline-flex;align-items:center;gap:.375rem;border-radius:.75rem;padding:.5rem .9375rem;font-size:.8125rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;}
+.eng-btn-primary{background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;box-shadow:0 4px 15px rgba(14,165,233,.3);}
+.eng-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.4);}
 .eng-btn-outline{background:#fff;color:#374151;border:1.5px solid #e5e7eb;}
-.eng-btn-outline:hover{border-color:#93c5fd;color:#0ea5e9;}
-.eng-btn-sm{padding:.3rem .7rem;font-size:.78rem;}
-.eng-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-.eng-input{border:1.5px solid #e5e7eb;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;outline:none;font-family:inherit;transition:border-color .15s;background:#fff;color:#111827;width:100%;}
-.eng-input:focus{border-color:#0ea5e9;}
-.eng-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .5rem center;background-size:1rem;padding-right:2rem;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.eng-btn-outline:hover{border-color:#7dd3fc;color:#0ea5e9;background:#f0f9ff;}
+.eng-btn-sm{padding:.3125rem .75rem;font-size:.78rem;}
+.eng-btn:disabled{opacity:.45;cursor:not-allowed;transform:none !important;box-shadow:none !important;}
+.eng-input{
+  border:1.5px solid #e5e7eb;border-radius:.75rem;
+  padding:.5rem .875rem;font-size:.875rem;outline:none;
+  font-family:inherit;transition:all .2s;
+  background:#f8fbff;color:#111827;width:100%;
+}
+.eng-input:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.1);}
+.eng-select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .625rem center;background-size:1rem;padding-right:2.25rem;
+}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── Modal ── */
-.eng-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:1rem;}
+.skeleton{
+  background:linear-gradient(90deg,#f0f3fb 25%,#e4eaf6 50%,#f0f3fb 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+  border-radius:.875rem;
+}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+.eng-modal-bg{display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:300;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(6px);}
 .eng-modal-bg.open{display:flex;}
-.eng-modal{background:#fff;border-radius:1.25rem;width:480px;max-width:100%;padding:1.75rem;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+.eng-modal{background:#fff;border-radius:1.5rem;width:480px;max-width:100%;padding:2rem;box-shadow:0 24px 80px rgba(10,22,40,.25);}
 
-/* ── Responsive ── */
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
 @media(max-width:768px){
   .eng-sidebar{transform:translateX(-100%);}
   .eng-sidebar.open{transform:translateX(0);}
@@ -97,21 +241,26 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
         <div class="eng-nav-label">My Work</div>
         <a href="{{ route('engineer.complaints.index') }}"
            class="eng-nav-link {{ request()->routeIs('engineer.complaints.index') ? 'active' : '' }}">
-            <span class="icon">📋</span> My Assignments
+            <span class="eng-nav-icon">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            </span>
+            My Assignments
         </a>
         <a href="{{ route('engineer.complaints.completed') }}"
-           class="eng-nav-link {{ request()->routeIs('engineer.complaints.completed') ? 'active' : '' }}"
-           style="{{ request()->routeIs('engineer.complaints.completed') ? '' : '' }}">
-            <span class="icon">🏆</span> Completed Tasks
-            {{-- Live badge showing verified count --}}
-            <span id="completed-badge" style="margin-left:auto;min-width:20px;height:20px;background:rgba(16,185,129,.2);
-                  color:#059669;font-size:.6rem;font-weight:700;border-radius:9999px;
-                  display:inline-flex;align-items:center;justify-content:center;padding:0 .35rem;"></span>
+           class="eng-nav-link {{ request()->routeIs('engineer.complaints.completed') ? 'active' : '' }}">
+            <span class="eng-nav-icon">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            </span>
+            Completed Tasks
+            <span class="eng-nav-count" id="completed-badge"></span>
         </a>
 
         <div class="eng-nav-label">System</div>
-        <a href="{{ url('/') }}" class="eng-nav-link">
-            <span class="icon">🌐</span> Public Site
+        <a href="{{ url('/') }}" class="eng-nav-link" target="_blank">
+            <span class="eng-nav-icon">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+            </span>
+            Public Site
         </a>
     </nav>
 
@@ -119,18 +268,18 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
         <div class="eng-user-row">
             @if(auth()->user()->profile_photo_url)
                 <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
-                     style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                     style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(14,165,233,.4);">
             @else
                 <div class="eng-user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
             @endif
             <div style="flex:1;min-width:0;">
-                <div style="font-size:.8125rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
-                <div style="font-size:.7rem;color:rgba(255,255,255,.4);">Engineer</div>
+                <div class="eng-user-name">{{ auth()->user()->name }}</div>
+                <div class="eng-user-role">Field Engineer</div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="eng-signout" title="Sign out">
-                    <svg style="width:1.125rem;height:1.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                 </button>
@@ -146,84 +295,96 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
 <div class="eng-main">
     <header class="eng-topbar">
         <div class="eng-topbar-left">
-            {{-- Hamburger (mobile only) --}}
             <button class="eng-hamburger" id="eng-hamburger" aria-label="Toggle sidebar" onclick="engToggleSidebar()">
                 <span></span><span></span><span></span>
             </button>
             <span class="eng-topbar-title">@yield('page-title', 'Engineer Panel')</span>
         </div>
 
-        {{-- Topbar user dropdown --}}
-        <style>
-            @keyframes engDropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-            #eng-user-menu{animation:engDropIn .15s ease;}
-        </style>
-        <div style="position:relative;">
-            <button onclick="document.getElementById('eng-user-menu').style.display=document.getElementById('eng-user-menu').style.display==='block'?'none':'block'"
-                    style="display:flex;align-items:center;gap:.5rem;background:#f9fafb;border:1.5px solid #e5e7eb;
-                           border-radius:9999px;padding:.3rem .75rem .3rem .3rem;cursor:pointer;
-                           transition:border-color .15s;font-family:inherit;"
-                    onmouseover="this.style.borderColor='#7dd3fc'" onmouseout="this.style.borderColor='#e5e7eb'">
-                @if(auth()->user()->profile_photo_url)
-                    <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
-                         style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
-                @else
-                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);
-                                display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
-                @endif
-                <span style="font-size:.8125rem;font-weight:600;color:#374151;">{{ auth()->user()->name }}</span>
-                <svg style="width:12px;height:12px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                </svg>
+        {{-- Topbar right --}}
+        <div style="display:flex;align-items:center;gap:.875rem;">
+
+            {{-- Notification Bell --}}
+            <button style="position:relative;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;backdrop-filter:blur(10px);"
+                    onmouseover="this.style.background='rgba(14,165,233,.1)';this.style.borderColor='#7dd3fc'"
+                    onmouseout="this.style.background='rgba(255,255,255,.7)';this.style.borderColor='rgba(255,255,255,.9)'">
+                <svg width="16" height="16" fill="none" stroke="#374151" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
             </button>
 
-            <div id="eng-user-menu" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:220px;
-                 background:#fff;border:1.5px solid #f1f1f1;border-radius:1rem;
-                 box-shadow:0 16px 48px rgba(0,0,0,.12);z-index:500;overflow:hidden;">
-
-                {{-- Profile header --}}
-                <div style="padding:.875rem 1rem;border-bottom:1px solid #f3f4f6;display:flex;gap:.625rem;align-items:center;">
+            {{-- User dropdown --}}
+            <style>
+                @keyframes engDropIn{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+                #eng-user-menu{animation:engDropIn .18s cubic-bezier(.4,0,.2,1);}
+            </style>
+            <div style="position:relative;">
+                <button onclick="document.getElementById('eng-user-menu').style.display=document.getElementById('eng-user-menu').style.display==='block'?'none':'block'"
+                        style="display:flex;align-items:center;gap:.625rem;background:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.9);
+                               border-radius:9999px;padding:.3125rem .875rem .3125rem .3125rem;cursor:pointer;
+                               transition:all .2s;font-family:inherit;backdrop-filter:blur(10px);"
+                        onmouseover="this.style.background='rgba(255,255,255,.9)';this.style.borderColor='#7dd3fc'"
+                        onmouseout="this.style.background='rgba(255,255,255,.7)';this.style.borderColor='rgba(255,255,255,.9)'">
                     @if(auth()->user()->profile_photo_url)
                         <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
-                             style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                             style="width:30px;height:30px;border-radius:50%;object-fit:cover;">
                     @else
-                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);
-                                    display:flex;align-items:center;justify-content:center;
-                                    color:#fff;font-size:.875rem;font-weight:700;flex-shrink:0;">
+                        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+                                    display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;">
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         </div>
                     @endif
-                    <div style="min-width:0;">
-                        <div style="font-size:.8125rem;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
-                        <div style="font-size:.72rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->email }}</div>
-                        <span style="font-size:.65rem;font-weight:700;background:#e0f2fe;color:#0284c7;padding:.1rem .4rem;border-radius:4px;">Engineer</span>
-                    </div>
-                </div>
+                    <span style="font-size:.8125rem;font-weight:600;color:#0a1628;">{{ auth()->user()->name }}</span>
+                    <svg style="width:12px;height:12px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
 
-                {{-- My Profile + Sign Out --}}
-                <div style="padding:.5rem;">
-                    <a href="{{ route('engineer.profile') }}"
-                       style="width:100%;display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
-                              background:none;border-radius:.5rem;font-size:.8125rem;
-                              font-weight:600;color:#374151;cursor:pointer;text-decoration:none;
-                              transition:background .15s;"
-                       onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">
-                        👤 My Profile
-                    </a>
-                    <div style="height:1px;background:#f3f4f6;margin:.25rem 0;"></div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit"
-                                style="width:100%;display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;
-                                       background:none;border:none;border-radius:.5rem;font-size:.8125rem;
-                                       font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;
-                                       transition:background .15s;text-align:left;"
-                                onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
-                            🚪 Sign Out
-                        </button>
-                    </form>
+                <div id="eng-user-menu" style="display:none;position:absolute;top:calc(100% + 12px);right:0;width:230px;
+                     background:#fff;border:1px solid #e8f4fe;border-radius:1.25rem;
+                     box-shadow:0 20px 60px rgba(10,22,40,.15);z-index:500;overflow:hidden;">
+
+                    <div style="padding:1rem;border-bottom:1px solid #f0f9ff;display:flex;gap:.75rem;align-items:center;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);">
+                        @if(auth()->user()->profile_photo_url)
+                            <img src="{{ auth()->user()->profile_photo_url }}" alt="avatar"
+                                 style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #bae6fd;">
+                        @else
+                            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+                                        display:flex;align-items:center;justify-content:center;
+                                        color:#fff;font-size:.9375rem;font-weight:700;flex-shrink:0;
+                                        box-shadow:0 3px 10px rgba(14,165,233,.35);">
+                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div style="min-width:0;">
+                            <div style="font-size:.8125rem;font-weight:700;color:#0c4a6e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
+                            <div style="font-size:.7rem;color:#7dd3fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.0625rem;">{{ auth()->user()->email }}</div>
+                            <span style="font-size:.625rem;font-weight:700;background:#e0f2fe;color:#0284c7;padding:.125rem .4rem;border-radius:5px;margin-top:.25rem;display:inline-block;">ENGINEER</span>
+                        </div>
+                    </div>
+
+                    <div style="padding:.5rem;">
+                        <a href="{{ route('engineer.profile') }}"
+                           style="width:100%;display:flex;align-items:center;gap:.625rem;padding:.5625rem .875rem;
+                                  background:none;border-radius:.75rem;font-size:.8125rem;
+                                  font-weight:500;color:#374151;cursor:pointer;text-decoration:none;
+                                  transition:all .15s;"
+                           onmouseover="this.style.background='#f0f9ff';this.style.color='#0ea5e9'" onmouseout="this.style.background='none';this.style.color='#374151'">
+                            <span style="width:28px;height:28px;border-radius:.5rem;background:#f0f9ff;display:flex;align-items:center;justify-content:center;font-size:.8125rem;">👤</span>
+                            My Profile
+                        </a>
+                        <div style="height:1px;background:#f3f4f6;margin:.375rem .25rem;"></div>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                    style="width:100%;display:flex;align-items:center;gap:.625rem;padding:.5625rem .875rem;
+                                           background:none;border:none;border-radius:.75rem;font-size:.8125rem;
+                                           font-weight:500;color:#dc2626;cursor:pointer;font-family:inherit;
+                                           transition:all .15s;text-align:left;"
+                                    onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
+                                <span style="width:28px;height:28px;border-radius:.5rem;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:.8125rem;">🚪</span>
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -237,7 +398,6 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
             }
         });
 
-        // ── Mobile sidebar drawer ──────────────────────────────────────────
         function engToggleSidebar() {
             const sidebar   = document.querySelector('.eng-sidebar');
             const overlay   = document.getElementById('eng-overlay');
@@ -258,14 +418,12 @@ body{font-family:'Inter',sans-serif;background:#f5f6fa;color:#111827;-webkit-fon
             document.getElementById('eng-overlay').classList.remove('open');
             document.getElementById('eng-hamburger').classList.remove('open');
         }
-        // Auto-close drawer when a nav link is tapped on mobile
         document.querySelectorAll('.eng-nav-link').forEach(function(link) {
             link.addEventListener('click', function() {
                 if (window.innerWidth <= 768) engCloseSidebar();
             });
         });
     </script>
-
 
     <main class="eng-content">
         @yield('content')
