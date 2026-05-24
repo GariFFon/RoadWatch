@@ -19,13 +19,15 @@ class RegistrationTest extends TestCase
     public function test_new_users_can_register(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'name'                  => 'Test User',
+            'email'                 => 'test@example.com',
+            'phone'                 => '9876543210',   // required by RegisteredUserController
+            'password'              => 'Password1',     // requires mixedCase + number
+            'password_confirmation' => 'Password1',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // New citizens (public registration) redirect to citizen complaints index
+        $response->assertRedirect(route('citizen.complaints.index', absolute: false));
     }
 }
