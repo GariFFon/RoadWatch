@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Api\V1\Engineer;
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ComplaintResource;
 use App\Models\Complaint;
-use App\Models\StatusHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,6 +29,7 @@ class ComplaintController extends Controller
         }
 
         $complaints = $query->latest()->paginate(15);
+
         return ComplaintResource::collection($complaints);
     }
 
@@ -35,6 +37,7 @@ class ComplaintController extends Controller
     {
         abort_unless($complaint->assigned_to === auth()->id(), 403);
         $complaint->load(['category', 'media', 'statusHistories.changedBy', 'user:id,name', 'assignedEngineer:id,name', 'ratedBy:id,name', 'feedback']);
+
         return new ComplaintResource($complaint);
     }
 
@@ -43,7 +46,7 @@ class ComplaintController extends Controller
         abort_unless($complaint->assigned_to === auth()->id(), 403);
 
         $data = $request->validate([
-            'status'  => ['required', 'in:' . implode(',', Complaint::STATUSES)],
+            'status' => ['required', 'in:'.implode(',', Complaint::STATUSES)],
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -53,7 +56,7 @@ class ComplaintController extends Controller
             ], 422);
         }
 
-        if (!$complaint->canTransitionTo($data['status'])) {
+        if (! $complaint->canTransitionTo($data['status'])) {
             return response()->json([
                 'message' => "Cannot transition from [{$complaint->status}] to [{$data['status']}].",
             ], 422);
@@ -68,7 +71,7 @@ class ComplaintController extends Controller
 
         // Engineers may only move to these statuses (never verified/rejected — admin-only)
         $engineerAllowed = [Complaint::STATUS_AWAITING_VERIFICATION, Complaint::STATUS_IN_PROGRESS, Complaint::STATUS_UNDER_REVIEW, Complaint::STATUS_REJECTED];
-        if (!in_array($data['status'], $engineerAllowed)) {
+        if (! in_array($data['status'], $engineerAllowed)) {
             return response()->json(['message' => 'Engineers are not permitted to set this status.'], 403);
         }
 

@@ -40,9 +40,9 @@ class GoogleAuthController extends Controller
         if ($user) {
             // Update avatar and ensure email is marked verified
             $user->update([
-                'google_avatar'     => $googleUser->getAvatar(),
+                'google_avatar' => $googleUser->getAvatar(),
                 'email_verified_at' => $user->email_verified_at ?? now(),
-                'last_login_at'     => now(),
+                'last_login_at' => now(),
             ]);
 
             // ✅ Establish the session — this was the missing call
@@ -62,7 +62,7 @@ class GoogleAuthController extends Controller
         if ($user) {
             // Link their Google account to the existing email account
             $user->update([
-                'google_id'     => $googleUser->getId(),
+                'google_id' => $googleUser->getId(),
                 'google_avatar' => $googleUser->getAvatar(),
                 'auth_provider' => User::AUTH_GOOGLE,
                 'last_login_at' => now(),
@@ -77,15 +77,15 @@ class GoogleAuthController extends Controller
 
         // ── Case C: Brand-new user — create account ───────────────────────
         $newUser = User::create([
-            'name'              => $googleUser->getName(),
-            'email'             => $googleUser->getEmail(),
-            'google_id'         => $googleUser->getId(),
-            'google_avatar'     => $googleUser->getAvatar(),
-            'auth_provider'     => User::AUTH_GOOGLE,
-            'role'              => User::ROLE_CITIZEN,
-            'password'          => null,       // no password yet
-            'password_set'      => false,      // ← triggers mandatory setup
-            'is_active'         => true,
+            'name' => $googleUser->getName(),
+            'email' => $googleUser->getEmail(),
+            'google_id' => $googleUser->getId(),
+            'google_avatar' => $googleUser->getAvatar(),
+            'auth_provider' => User::AUTH_GOOGLE,
+            'role' => User::ROLE_CITIZEN,
+            'password' => null,       // no password yet
+            'password_set' => false,      // ← triggers mandatory setup
+            'is_active' => true,
             'email_verified_at' => now(),      // Google already verified email
         ]);
 
@@ -104,9 +104,9 @@ class GoogleAuthController extends Controller
     private function dashboardFor(User $user): string
     {
         return match ($user->role) {
-            User::ROLE_ADMIN    => route('admin.dashboard'),
+            User::ROLE_ADMIN => route('admin.dashboard'),
             User::ROLE_ENGINEER => route('engineer.complaints.index'),
-            default             => route('citizen.complaints.index'),
+            default => route('citizen.complaints.index'),
         };
     }
 }

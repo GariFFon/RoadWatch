@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * SQLite does not support ALTER COLUMN on CHECK constraints.
@@ -95,7 +94,7 @@ return new class extends Migration
             ");
 
             // Copy all existing rows
-            DB::statement("INSERT INTO complaints SELECT * FROM _complaints_old");
+            DB::statement('INSERT INTO complaints SELECT * FROM _complaints_old');
 
             // Recreate indexes
             DB::statement('CREATE INDEX IF NOT EXISTS complaints_status_index     ON complaints (status)');
@@ -150,7 +149,7 @@ return new class extends Migration
                 )
             ");
 
-            DB::statement("INSERT INTO complaints SELECT * FROM _complaints_old");
+            DB::statement('INSERT INTO complaints SELECT * FROM _complaints_old');
 
             DB::statement('CREATE INDEX IF NOT EXISTS complaints_status_index     ON complaints (status)');
             DB::statement('CREATE INDEX IF NOT EXISTS complaints_severity_index   ON complaints (severity)');

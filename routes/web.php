@@ -13,13 +13,13 @@ Route::get('/', function () {
 })->name('home');
 
 // ── Google OAuth ───────────────────────────────────────────────────────────
-Route::get('/auth/google',          [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
 // ── Mandatory set-password (Google new users) ──────────────────────────────
 // Must be auth'd but NOT behind EnsurePasswordIsSet (would loop)
 Route::middleware('auth')->group(function () {
-    Route::get( '/set-password', [SetPasswordController::class, 'show']) ->name('password.setup');
+    Route::get('/set-password', [SetPasswordController::class, 'show'])->name('password.setup');
     Route::post('/set-password', [SetPasswordController::class, 'store'])->name('password.setup.store');
 });
 
@@ -29,37 +29,36 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'password.setup'])->group(function () {
 
     // Profile (Breeze default)
-    Route::get('/profile',    [ProfileController::class, 'edit'])   ->name('profile.edit');
-    Route::patch('/profile',  [ProfileController::class, 'update']) ->name('profile.update');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // ── Citizen panel ──────────────────────────────────────────────────
     Route::middleware('role:citizen')->prefix('citizen')->name('citizen.')->group(function () {
-        Route::get('complaints',             [CitizenComplaintController::class, 'index']) ->name('complaints.index');
-        Route::get('complaints/create',      [CitizenComplaintController::class, 'create'])->name('complaints.create');
-        Route::post('complaints',            [CitizenComplaintController::class, 'store']) ->name('complaints.store');
-        Route::get('complaints/{complaint}', [CitizenComplaintController::class, 'show'])  ->name('complaints.show');
+        Route::get('complaints', [CitizenComplaintController::class, 'index'])->name('complaints.index');
+        Route::get('complaints/create', [CitizenComplaintController::class, 'create'])->name('complaints.create');
+        Route::post('complaints', [CitizenComplaintController::class, 'store'])->name('complaints.store');
+        Route::get('complaints/{complaint}', [CitizenComplaintController::class, 'show'])->name('complaints.show');
         Route::post('complaints/{complaint}/feedback', [CitizenFeedbackController::class, 'store'])->name('complaints.feedback');
-        Route::get('profile',               fn() => view('citizen.profile'))->name('profile');
+        Route::get('profile', fn () => view('citizen.profile'))->name('profile');
     });
 
     // ── Engineer panel ─────────────────────────────────────────────────
     Route::middleware('role:engineer')->prefix('engineer')->name('engineer.')->group(function () {
-        Route::get('complaints',                fn() => view('engineer.complaints.index'))    ->name('complaints.index');
-        Route::get('complaints/completed',      fn() => view('engineer.complaints.completed'))->name('complaints.completed');
-        Route::get('complaints/{complaint}',    fn() => view('engineer.complaints.show'))     ->name('complaints.show');
-        Route::get('profile',                   fn() => view('engineer.profile'))             ->name('profile');
+        Route::get('complaints', fn () => view('engineer.complaints.index'))->name('complaints.index');
+        Route::get('complaints/completed', fn () => view('engineer.complaints.completed'))->name('complaints.completed');
+        Route::get('complaints/{complaint}', fn () => view('engineer.complaints.show'))->name('complaints.show');
+        Route::get('profile', fn () => view('engineer.profile'))->name('profile');
     });
 
     // ── Admin panel ────────────────────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('dashboard',   fn() => view('admin.dashboard'))          ->name('dashboard');
-        Route::get('complaints',  fn() => view('admin.complaints.index'))   ->name('complaints.index');
-        Route::get('users',       fn() => view('admin.users.index'))        ->name('users.index');
-        Route::get('categories',  fn() => view('admin.categories.index'))   ->name('categories.index');
-        Route::get('profile',     fn() => view('admin.profile'))            ->name('profile');
+        Route::get('dashboard', fn () => view('admin.dashboard'))->name('dashboard');
+        Route::get('complaints', fn () => view('admin.complaints.index'))->name('complaints.index');
+        Route::get('users', fn () => view('admin.users.index'))->name('users.index');
+        Route::get('categories', fn () => view('admin.categories.index'))->name('categories.index');
+        Route::get('profile', fn () => view('admin.profile'))->name('profile');
     });
 });
 
 require __DIR__.'/auth.php';
-

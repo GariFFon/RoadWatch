@@ -23,40 +23,40 @@ class MediaController extends Controller
         }
 
         $request->validate([
-            'files'    => ['required', 'array', 'max:5'],
-            'files.*'  => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:51200'],
-            'stage'    => ['nullable', 'in:before,after'],
+            'files' => ['required', 'array', 'max:5'],
+            'files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:51200'],
+            'stage' => ['nullable', 'in:before,after'],
         ]);
 
-        $stage   = $request->input('stage', 'before');
-        $added   = [];
+        $stage = $request->input('stage', 'before');
+        $added = [];
         $existing = $complaint->media()->count();
-        $disk    = config('filesystems.default');
+        $disk = config('filesystems.default');
 
         foreach ($request->file('files') as $index => $file) {
             $isVideo = in_array($file->getMimeType(), ['video/mp4', 'video/quicktime', 'video/webm']);
-            $folder  = $isVideo ? 'videos' : 'images';
-            $ext     = $file->getClientOriginalExtension() ?: ($isVideo ? 'mp4' : 'jpg');
-            $path    = "complaints/{$complaint->id}/{$folder}/" . Str::random(20) . ".{$ext}";
+            $folder = $isVideo ? 'videos' : 'images';
+            $ext = $file->getClientOriginalExtension() ?: ($isVideo ? 'mp4' : 'jpg');
+            $path = "complaints/{$complaint->id}/{$folder}/".Str::random(20).".{$ext}";
             // Upload without ACL — bucket uses a public Bucket Policy instead.
             Storage::disk($disk)->put($path, file_get_contents($file));
 
             $media = ComplaintMedia::create([
-                'complaint_id'  => $complaint->id,
-                'uploaded_by'   => auth()->id(),
-                'file_type'     => $isVideo ? 'video' : 'image',
-                'stage'         => $stage,
+                'complaint_id' => $complaint->id,
+                'uploaded_by' => auth()->id(),
+                'file_type' => $isVideo ? 'video' : 'image',
+                'stage' => $stage,
                 'original_name' => $file->getClientOriginalName(),
-                'mime_type'     => $file->getMimeType(),
-                'size_bytes'    => $file->getSize(),
-                'cloud_disk'    => $disk,
-                'cloud_path'    => $path,
-                'cloud_url'     => $this->buildPublicUrl($disk, $path),
-                'sort_order'    => $existing + $index,
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'cloud_disk' => $disk,
+                'cloud_path' => $path,
+                'cloud_url' => $this->buildPublicUrl($disk, $path),
+                'sort_order' => $existing + $index,
             ]);
 
             $added[] = [
-                'id'        => $media->id,
+                'id' => $media->id,
                 'file_type' => $media->file_type,
                 'cloud_url' => $media->cloud_url,
             ];
@@ -88,10 +88,11 @@ class MediaController extends Controller
         if ($disk === 's3') {
             $customUrl = config('filesystems.disks.s3.url');
             if ($customUrl) {
-                return rtrim($customUrl, '/') . '/' . $path;
+                return rtrim($customUrl, '/').'/'.$path;
             }
             $bucket = config('filesystems.disks.s3.bucket');
             $region = config('filesystems.disks.s3.region');
+
             return "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
         }
 

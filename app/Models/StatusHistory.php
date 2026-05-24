@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,8 +35,8 @@ class StatusHistory extends Model
     protected function casts(): array
     {
         return [
-            'created_at'               => 'datetime',
-            'time_in_previous_status'  => 'integer',
+            'created_at' => 'datetime',
+            'time_in_previous_status' => 'integer',
         ];
     }
 
@@ -110,7 +112,7 @@ class StatusHistory extends Model
      */
     public function getTransitionLabelAttribute(): string
     {
-        return $this->old_status_label . ' → ' . $this->new_status_label;
+        return $this->old_status_label.' → '.$this->new_status_label;
     }
 
     /**
@@ -121,13 +123,21 @@ class StatusHistory extends Model
     {
         $seconds = $this->time_in_previous_status;
 
-        if (! $seconds) return 'N/A';
+        if (! $seconds) {
+            return 'N/A';
+        }
 
-        if ($seconds >= 86400) return round($seconds / 86400) . ' day(s)';
-        if ($seconds >= 3600)  return round($seconds / 3600)  . ' hour(s)';
-        if ($seconds >= 60)    return round($seconds / 60)    . ' minute(s)';
+        if ($seconds >= 86400) {
+            return round($seconds / 86400).' day(s)';
+        }
+        if ($seconds >= 3600) {
+            return round($seconds / 3600).' hour(s)';
+        }
+        if ($seconds >= 60) {
+            return round($seconds / 60).' minute(s)';
+        }
 
-        return $seconds . ' second(s)';
+        return $seconds.' second(s)';
     }
 
     /**
@@ -136,13 +146,13 @@ class StatusHistory extends Model
     public function getNewStatusColorAttribute(): string
     {
         return match ($this->new_status) {
-            Complaint::STATUS_PENDING               => 'yellow',
-            Complaint::STATUS_UNDER_REVIEW          => 'blue',
-            Complaint::STATUS_IN_PROGRESS           => 'indigo',
+            Complaint::STATUS_PENDING => 'yellow',
+            Complaint::STATUS_UNDER_REVIEW => 'blue',
+            Complaint::STATUS_IN_PROGRESS => 'indigo',
             Complaint::STATUS_AWAITING_VERIFICATION => 'orange',
-            Complaint::STATUS_VERIFIED              => 'green',
-            Complaint::STATUS_REJECTED              => 'red',
-            default                                 => 'gray',
+            Complaint::STATUS_VERIFIED => 'green',
+            Complaint::STATUS_REJECTED => 'red',
+            default => 'gray',
         };
     }
 
@@ -154,7 +164,7 @@ class StatusHistory extends Model
      * Get full timeline for a complaint, ordered chronologically.
      * Use this to render the status timeline on the complaint detail page.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public static function timelineFor(int $complaintId)
     {
@@ -178,10 +188,12 @@ class StatusHistory extends Model
             ->where('new_status', Complaint::STATUS_VERIFIED)
             ->value('created_at');
 
-        if (! $first || ! $resolved) return null;
+        if (! $first || ! $resolved) {
+            return null;
+        }
 
-        return (int) \Carbon\Carbon::parse($first)
-            ->diffInSeconds(\Carbon\Carbon::parse($resolved));
+        return (int) Carbon::parse($first)
+            ->diffInSeconds(Carbon::parse($resolved));
     }
 
     // -------------------------------------------------------------------------
@@ -221,13 +233,13 @@ class StatusHistory extends Model
     private function formatStatusLabel(string $status): string
     {
         return match ($status) {
-            Complaint::STATUS_PENDING               => 'Pending',
-            Complaint::STATUS_UNDER_REVIEW          => 'Under Review',
-            Complaint::STATUS_IN_PROGRESS           => 'In Progress',
+            Complaint::STATUS_PENDING => 'Pending',
+            Complaint::STATUS_UNDER_REVIEW => 'Under Review',
+            Complaint::STATUS_IN_PROGRESS => 'In Progress',
             Complaint::STATUS_AWAITING_VERIFICATION => 'Awaiting Verification',
-            Complaint::STATUS_VERIFIED              => 'Verified',
-            Complaint::STATUS_REJECTED              => 'Rejected',
-            default                                 => ucwords(str_replace('_', ' ', $status)),
+            Complaint::STATUS_VERIFIED => 'Verified',
+            Complaint::STATUS_REJECTED => 'Rejected',
+            default => ucwords(str_replace('_', ' ', $status)),
         };
     }
 }

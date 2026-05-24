@@ -26,8 +26,8 @@ class ProfileMediaController extends Controller
         $this->deleteOldS3($user->profile_photo);
 
         $file = $request->file('photo');
-        $ext  = $file->getClientOriginalExtension();
-        $path = "users/{$user->id}/profile/photo_" . Str::random(10) . ".{$ext}";
+        $ext = $file->getClientOriginalExtension();
+        $path = "users/{$user->id}/profile/photo_".Str::random(10).".{$ext}";
 
         // Upload WITHOUT ACL — bucket has "Object Ownership enforced", ACLs are disabled
         Storage::disk('s3')->put($path, file_get_contents($file));
@@ -36,7 +36,7 @@ class ProfileMediaController extends Controller
         $user->update(['profile_photo' => $url]);
 
         return response()->json([
-            'message'           => 'Profile photo updated.',
+            'message' => 'Profile photo updated.',
             'profile_photo_url' => $url,
         ]);
     }
@@ -57,8 +57,8 @@ class ProfileMediaController extends Controller
         $this->deleteOldS3($user->profile_banner_url);
 
         $file = $request->file('banner');
-        $ext  = $file->getClientOriginalExtension();
-        $path = "users/{$user->id}/profile/banner_" . Str::random(10) . ".{$ext}";
+        $ext = $file->getClientOriginalExtension();
+        $path = "users/{$user->id}/profile/banner_".Str::random(10).".{$ext}";
 
         // Upload WITHOUT ACL
         Storage::disk('s3')->put($path, file_get_contents($file));
@@ -67,7 +67,7 @@ class ProfileMediaController extends Controller
         $user->update(['profile_banner_url' => $url]);
 
         return response()->json([
-            'message'            => 'Profile banner updated.',
+            'message' => 'Profile banner updated.',
             'profile_banner_url' => $url,
         ]);
     }
@@ -95,11 +95,11 @@ class ProfileMediaController extends Controller
     {
         $bucket = config('filesystems.disks.s3.bucket');
         $region = config('filesystems.disks.s3.region');
-        $url    = config('filesystems.disks.s3.url');
+        $url = config('filesystems.disks.s3.url');
 
         // If a custom URL is set (e.g. CloudFront CDN), use it
         if ($url) {
-            return rtrim($url, '/') . '/' . $path;
+            return rtrim($url, '/').'/'.$path;
         }
 
         return "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
@@ -107,14 +107,14 @@ class ProfileMediaController extends Controller
 
     private function deleteOldS3(?string $url): void
     {
-        if (!$url || !str_contains($url, 'amazonaws.com')) {
+        if (! $url || ! str_contains($url, 'amazonaws.com')) {
             return;
         }
 
         // Extract the S3 object key from the full URL (virtual-hosted style)
         // URL format: https://bucket.s3.region.amazonaws.com/KEY
         $parsed = parse_url($url);
-        $key    = ltrim($parsed['path'] ?? '', '/');
+        $key = ltrim($parsed['path'] ?? '', '/');
         if ($key) {
             Storage::disk('s3')->delete($key);
         }

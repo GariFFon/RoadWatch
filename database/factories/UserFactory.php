@@ -25,16 +25,16 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'              => fake()->name(),
-            'email'             => fake()->unique()->safeEmail(),
-            'phone'             => fake()->unique()->numerify('##########'), // 10-digit, required by schema
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->unique()->numerify('##########'), // 10-digit, required by schema
             'email_verified_at' => now(),
-            'password'          => static::$password ??= Hash::make('password'),
-            'remember_token'    => Str::random(10),
-            'role'              => User::ROLE_CITIZEN,   // default role for tests
-            'auth_provider'     => User::AUTH_EMAIL,
-            'password_set'      => true,
-            'is_active'         => true,
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+            'role' => User::ROLE_CITIZEN,   // default role for tests
+            'auth_provider' => User::AUTH_EMAIL,
+            'password_set' => true,
+            'is_active' => true,
         ];
     }
 

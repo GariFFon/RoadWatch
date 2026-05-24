@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class Complaint extends Model
 {
@@ -18,9 +17,12 @@ class Complaint extends Model
     // Constants
     // -------------------------------------------------------------------------
 
-    const SEVERITY_LOW       = 'low';
-    const SEVERITY_MEDIUM    = 'medium';
-    const SEVERITY_HIGH      = 'high';
+    const SEVERITY_LOW = 'low';
+
+    const SEVERITY_MEDIUM = 'medium';
+
+    const SEVERITY_HIGH = 'high';
+
     const SEVERITY_EMERGENCY = 'emergency';
 
     const SEVERITY_LEVELS = [
@@ -30,12 +32,17 @@ class Complaint extends Model
         self::SEVERITY_EMERGENCY,
     ];
 
-    const STATUS_PENDING               = 'pending';
-    const STATUS_UNDER_REVIEW           = 'under_review';
-    const STATUS_IN_PROGRESS            = 'in_progress';
-    const STATUS_AWAITING_VERIFICATION  = 'awaiting_verification'; // engineer done, waiting admin sign-off
-    const STATUS_VERIFIED               = 'verified';              // admin approved — truly complete
-    const STATUS_REJECTED               = 'rejected';              // admin rejected the whole complaint
+    const STATUS_PENDING = 'pending';
+
+    const STATUS_UNDER_REVIEW = 'under_review';
+
+    const STATUS_IN_PROGRESS = 'in_progress';
+
+    const STATUS_AWAITING_VERIFICATION = 'awaiting_verification'; // engineer done, waiting admin sign-off
+
+    const STATUS_VERIFIED = 'verified';              // admin approved — truly complete
+
+    const STATUS_REJECTED = 'rejected';              // admin rejected the whole complaint
 
     const STATUSES = [
         self::STATUS_PENDING,
@@ -55,12 +62,12 @@ class Complaint extends Model
      * Admin reject complaint: any non-terminal → rejected
      */
     const VALID_TRANSITIONS = [
-        self::STATUS_PENDING              => [self::STATUS_UNDER_REVIEW, self::STATUS_REJECTED],
-        self::STATUS_UNDER_REVIEW         => [self::STATUS_IN_PROGRESS,  self::STATUS_REJECTED],
-        self::STATUS_IN_PROGRESS          => [self::STATUS_AWAITING_VERIFICATION, self::STATUS_REJECTED],
+        self::STATUS_PENDING => [self::STATUS_UNDER_REVIEW, self::STATUS_REJECTED],
+        self::STATUS_UNDER_REVIEW => [self::STATUS_IN_PROGRESS,  self::STATUS_REJECTED],
+        self::STATUS_IN_PROGRESS => [self::STATUS_AWAITING_VERIFICATION, self::STATUS_REJECTED],
         self::STATUS_AWAITING_VERIFICATION => [self::STATUS_VERIFIED, self::STATUS_IN_PROGRESS, self::STATUS_REJECTED],
-        self::STATUS_VERIFIED             => [],   // terminal
-        self::STATUS_REJECTED             => [],   // terminal
+        self::STATUS_VERIFIED => [],   // terminal
+        self::STATUS_REJECTED => [],   // terminal
     ];
 
     // -------------------------------------------------------------------------
@@ -100,16 +107,16 @@ class Complaint extends Model
     protected function casts(): array
     {
         return [
-            'latitude'               => 'decimal:7',
-            'longitude'              => 'decimal:7',
-            'votes_count'            => 'integer',
-            'views_count'            => 'integer',
-            'is_duplicate'           => 'boolean',
-            'is_anonymous'           => 'boolean',
-            'resolved_at'            => 'datetime',
-            'estimated_completion'   => 'date',
-            'engineer_rating'        => 'integer',
-            'rated_at'               => 'datetime',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+            'votes_count' => 'integer',
+            'views_count' => 'integer',
+            'is_duplicate' => 'boolean',
+            'is_anonymous' => 'boolean',
+            'resolved_at' => 'datetime',
+            'estimated_completion' => 'date',
+            'engineer_rating' => 'integer',
+            'rated_at' => 'datetime',
         ];
     }
 
@@ -118,10 +125,10 @@ class Complaint extends Model
     // -------------------------------------------------------------------------
 
     protected $attributes = [
-        'status'       => self::STATUS_PENDING,
-        'severity'     => self::SEVERITY_MEDIUM,
-        'votes_count'  => 0,
-        'views_count'  => 0,
+        'status' => self::STATUS_PENDING,
+        'severity' => self::SEVERITY_MEDIUM,
+        'votes_count' => 0,
+        'views_count' => 0,
         'is_duplicate' => false,
         'is_anonymous' => false,
     ];
@@ -142,12 +149,12 @@ class Complaint extends Model
         // so the timeline always shows when the complaint was first filed.
         static::created(function (Complaint $complaint) {
             StatusHistory::create([
-                'complaint_id'           => $complaint->id,
-                'changed_by'             => $complaint->user_id,   // filed by the citizen themselves
-                'old_status'             => null,                   // no previous status
-                'new_status'             => self::STATUS_PENDING,
-                'remarks'                => 'Complaint filed by citizen.',
-                'time_in_previous_status'=> 0,
+                'complaint_id' => $complaint->id,
+                'changed_by' => $complaint->user_id,   // filed by the citizen themselves
+                'old_status' => null,                   // no previous status
+                'new_status' => self::STATUS_PENDING,
+                'remarks' => 'Complaint filed by citizen.',
+                'time_in_previous_status' => 0,
             ]);
         });
     }
@@ -166,7 +173,7 @@ class Complaint extends Model
 
         $next = ($maxSeq ?? 0) + 1;
 
-        return 'RW-' . $year . '-' . str_pad($next, 5, '0', STR_PAD_LEFT);
+        return 'RW-'.$year.'-'.str_pad($next, 5, '0', STR_PAD_LEFT);
         // e.g. RW-2026-00003
     }
 
@@ -207,10 +214,10 @@ class Complaint extends Model
             throw new \InvalidArgumentException('Rating must be between 1 and 5.');
         }
         $this->update([
-            'engineer_rating'         => $rating,
+            'engineer_rating' => $rating,
             'engineer_rating_comment' => $comment,
-            'rated_by'                => $admin->id,
-            'rated_at'                => now(),
+            'rated_by' => $admin->id,
+            'rated_at' => now(),
         ]);
     }
 
@@ -383,11 +390,10 @@ class Complaint extends Model
                 'changed_by' => $changedBy->id,
                 'old_status' => $old,
                 'new_status' => $newStatus,
-                'remarks'    => $remarks,
+                'remarks' => $remarks,
             ]);
         });
     }
-
 
     /**
      * Full status timeline — pass to view for complaint detail page.
@@ -403,11 +409,18 @@ class Complaint extends Model
     public function resolutionTime(): ?string
     {
         $seconds = StatusHistory::resolutionTimeFor($this->id);
-        if (! $seconds) return null;
+        if (! $seconds) {
+            return null;
+        }
 
-        if ($seconds >= 86400) return round($seconds / 86400) . ' day(s)';
-        if ($seconds >= 3600)  return round($seconds / 3600)  . ' hour(s)';
-        return round($seconds / 60) . ' minute(s)';
+        if ($seconds >= 86400) {
+            return round($seconds / 86400).' day(s)';
+        }
+        if ($seconds >= 3600) {
+            return round($seconds / 3600).' hour(s)';
+        }
+
+        return round($seconds / 60).' minute(s)';
     }
 
     /**
@@ -436,13 +449,13 @@ class Complaint extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING              => 'Pending',
-            self::STATUS_UNDER_REVIEW         => 'Under Review',
-            self::STATUS_IN_PROGRESS          => 'In Progress',
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_UNDER_REVIEW => 'Under Review',
+            self::STATUS_IN_PROGRESS => 'In Progress',
             self::STATUS_AWAITING_VERIFICATION => 'Awaiting Verification',
-            self::STATUS_VERIFIED             => 'Verified ✓',
-            self::STATUS_REJECTED             => 'Rejected',
-            default                           => ucfirst($this->status),
+            self::STATUS_VERIFIED => 'Verified ✓',
+            self::STATUS_REJECTED => 'Rejected',
+            default => ucfirst($this->status),
         };
     }
 
@@ -452,13 +465,13 @@ class Complaint extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING              => 'yellow',
-            self::STATUS_UNDER_REVIEW         => 'blue',
-            self::STATUS_IN_PROGRESS          => 'indigo',
+            self::STATUS_PENDING => 'yellow',
+            self::STATUS_UNDER_REVIEW => 'blue',
+            self::STATUS_IN_PROGRESS => 'indigo',
             self::STATUS_AWAITING_VERIFICATION => 'orange',
-            self::STATUS_VERIFIED             => 'green',
-            self::STATUS_REJECTED             => 'red',
-            default                           => 'gray',
+            self::STATUS_VERIFIED => 'green',
+            self::STATUS_REJECTED => 'red',
+            default => 'gray',
         };
     }
 
@@ -468,11 +481,11 @@ class Complaint extends Model
     public function getSeverityColorAttribute(): string
     {
         return match ($this->severity) {
-            self::SEVERITY_LOW       => 'green',
-            self::SEVERITY_MEDIUM    => 'yellow',
-            self::SEVERITY_HIGH      => 'orange',
+            self::SEVERITY_LOW => 'green',
+            self::SEVERITY_MEDIUM => 'yellow',
+            self::SEVERITY_HIGH => 'orange',
             self::SEVERITY_EMERGENCY => 'red',
-            default                  => 'gray',
+            default => 'gray',
         };
     }
 
@@ -520,12 +533,12 @@ class Complaint extends Model
     public function scopeNearby($query, float $lat, float $lng, float $radiusKm = 5)
     {
         // Haversine formula to find complaints within radius
-        return $query->selectRaw("
+        return $query->selectRaw('
                 *, ( 6371 * acos(
                     cos(radians(?)) * cos(radians(latitude)) *
                     cos(radians(longitude) - radians(?)) +
                     sin(radians(?)) * sin(radians(latitude))
-                )) AS distance", [$lat, $lng, $lat])
+                )) AS distance', [$lat, $lng, $lat])
             ->having('distance', '<=', $radiusKm)
             ->orderBy('distance');
     }

@@ -35,24 +35,24 @@ class RegisteredUserController extends Controller
     {
         // ── Step 2: Controller validates data ──────────────────────────────
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'phone'    => ['required', 'string', 'max:15', 'unique:users,phone'],
-            'gender'   => ['nullable', 'in:male,female,other,prefer_not_to_say'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:15', 'unique:users,phone'],
+            'gender' => ['nullable', 'in:male,female,other,prefer_not_to_say'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ]);
 
         // ── Step 3 & 4: User model inserts into users table (SQLite) ───────
         $user = User::create([
-            'name'          => $validated['name'],
-            'email'         => $validated['email'],
-            'phone'         => $validated['phone'],
-            'gender'        => $validated['gender'] ?? null,
-            'password'      => $validated['password'],  // auto-hashed via model cast
-            'role'          => User::ROLE_CITIZEN,      // public registration = citizen only
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'gender' => $validated['gender'] ?? null,
+            'password' => $validated['password'],  // auto-hashed via model cast
+            'role' => User::ROLE_CITIZEN,      // public registration = citizen only
             'auth_provider' => User::AUTH_EMAIL,
-            'password_set'  => true,
-            'is_active'     => true,
+            'password_set' => true,
+            'is_active' => true,
         ]);
 
         // ── Step 5: Fire Registered event (sends verification email) ───────
@@ -70,9 +70,9 @@ class RegisteredUserController extends Controller
     private function redirectTo(User $user): string
     {
         return match ($user->role) {
-            User::ROLE_ADMIN    => route('admin.dashboard'),
+            User::ROLE_ADMIN => route('admin.dashboard'),
             User::ROLE_ENGINEER => route('engineer.dashboard'),
-            default             => route('citizen.complaints.index'),
+            default => route('citizen.complaints.index'),
         };
     }
 }

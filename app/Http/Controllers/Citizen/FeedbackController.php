@@ -21,15 +21,15 @@ class FeedbackController extends Controller
         }
 
         $request->validate([
-            'rating'  => ['required', 'integer', 'between:1,5'],
+            'rating' => ['required', 'integer', 'between:1,5'],
             'comment' => ['nullable', 'string', 'max:500'],
         ]);
 
         Feedback::create([
             'complaint_id' => $complaint->id,
-            'user_id'      => auth()->id(),
-            'rating'       => $request->rating,
-            'comment'      => $request->comment,
+            'user_id' => auth()->id(),
+            'rating' => $request->rating,
+            'comment' => $request->comment,
         ]);
 
         return redirect()

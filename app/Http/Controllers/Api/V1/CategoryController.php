@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Category;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller

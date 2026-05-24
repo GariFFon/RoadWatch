@@ -34,9 +34,9 @@ class VerifyEmailController extends Controller
     private function roleHomeUrl(User $user): string
     {
         return match ($user->role) {
-            User::ROLE_ADMIN    => route('admin.dashboard', absolute: false),
+            User::ROLE_ADMIN => route('admin.dashboard', absolute: false),
             User::ROLE_ENGINEER => route('engineer.complaints.index', absolute: false),
-            default             => route('citizen.complaints.index', absolute: false),
+            default => route('citizen.complaints.index', absolute: false),
         };
     }
 }

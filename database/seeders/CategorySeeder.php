@@ -16,6 +16,6 @@ class CategorySeeder extends Seeder
             );
         }
 
-        $this->command->info('✅ ' . count(Category::DEFAULTS) . ' categories seeded.');
+        $this->command->info('✅ '.count(Category::DEFAULTS).' categories seeded.');
     }
 }

@@ -22,18 +22,23 @@ class ComplaintMedia extends Model
     // -------------------------------------------------------------------------
 
     const TYPE_IMAGE = 'image';
+
     const TYPE_VIDEO = 'video';
 
-    const STAGE_BEFORE  = 'before';  // Citizen uploads when reporting
-    const STAGE_DURING  = 'during';  // Engineer uploads mid-fix progress
-    const STAGE_AFTER   = 'after';   // Engineer uploads proof of resolution
+    const STAGE_BEFORE = 'before';  // Citizen uploads when reporting
+
+    const STAGE_DURING = 'during';  // Engineer uploads mid-fix progress
+
+    const STAGE_AFTER = 'after';   // Engineer uploads proof of resolution
 
     // Allowed MIME types
     const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+
     const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
     // Size limits
     const MAX_IMAGE_SIZE_MB = 10;
+
     const MAX_VIDEO_SIZE_MB = 50;
 
     // -------------------------------------------------------------------------
@@ -67,12 +72,12 @@ class ComplaintMedia extends Model
     protected function casts(): array
     {
         return [
-            'size_bytes'  => 'integer',
-            'width'       => 'integer',
-            'height'      => 'integer',
-            'duration'    => 'float',
-            'sort_order'  => 'integer',
-            'is_flagged'  => 'boolean',
+            'size_bytes' => 'integer',
+            'width' => 'integer',
+            'height' => 'integer',
+            'duration' => 'float',
+            'sort_order' => 'integer',
+            'is_flagged' => 'boolean',
         ];
     }
 
@@ -82,7 +87,7 @@ class ComplaintMedia extends Model
 
     protected $attributes = [
         'cloud_disk' => 's3',  // change to 'cloudinary' if using Cloudinary
-        'stage'      => self::STAGE_BEFORE,
+        'stage' => self::STAGE_BEFORE,
         'is_flagged' => false,
         'sort_order' => 0,
     ];
@@ -127,9 +132,14 @@ class ComplaintMedia extends Model
     public function getFileSizeAttribute(): string
     {
         $bytes = $this->size_bytes;
-        if ($bytes >= 1048576) return round($bytes / 1048576, 2) . ' MB';
-        if ($bytes >= 1024)    return round($bytes / 1024, 2) . ' KB';
-        return $bytes . ' B';
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 2).' MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 2).' KB';
+        }
+
+        return $bytes.' B';
     }
 
     /**

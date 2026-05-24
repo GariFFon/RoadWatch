@@ -25,44 +25,44 @@ class MediaController extends Controller
         }
 
         $request->validate([
-            'files'   => ['required', 'array', 'min:1', 'max:10'],
+            'files' => ['required', 'array', 'min:1', 'max:10'],
             'files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,webm', 'max:51200'],
         ]);
 
-        $added    = [];
+        $added = [];
         $existing = $complaint->media()->count();
-        $disk     = config('filesystems.default');
+        $disk = config('filesystems.default');
 
         foreach ($request->file('files') as $index => $file) {
             $isVideo = in_array($file->getMimeType(), ['video/mp4', 'video/quicktime', 'video/webm']);
-            $folder  = $isVideo ? 'videos' : 'images';
-            $path    = $file->store("complaints/{$complaint->id}/{$folder}", $disk);
+            $folder = $isVideo ? 'videos' : 'images';
+            $path = $file->store("complaints/{$complaint->id}/{$folder}", $disk);
 
             $media = ComplaintMedia::create([
-                'complaint_id'  => $complaint->id,
-                'uploaded_by'   => auth()->id(),
-                'file_type'     => $isVideo ? 'video' : 'image',
-                'stage'         => 'after',
+                'complaint_id' => $complaint->id,
+                'uploaded_by' => auth()->id(),
+                'file_type' => $isVideo ? 'video' : 'image',
+                'stage' => 'after',
                 'original_name' => $file->getClientOriginalName(),
-                'mime_type'     => $file->getMimeType(),
-                'size_bytes'    => $file->getSize(),
-                'cloud_disk'    => $disk,
-                'cloud_path'    => $path,
-                'cloud_url'     => Storage::disk($disk)->url($path),
-                'sort_order'    => $existing + $index,
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'cloud_disk' => $disk,
+                'cloud_path' => $path,
+                'cloud_url' => Storage::disk($disk)->url($path),
+                'sort_order' => $existing + $index,
             ]);
 
             $added[] = [
-                'id'        => $media->id,
+                'id' => $media->id,
                 'file_type' => $media->file_type,
-                'stage'     => $media->stage,
+                'stage' => $media->stage,
                 'cloud_url' => $media->cloud_url,
             ];
         }
 
         return response()->json([
-            'message' => count($added) . ' file(s) uploaded as work evidence.',
-            'data'    => $added,
+            'message' => count($added).' file(s) uploaded as work evidence.',
+            'data' => $added,
         ], 201);
     }
 

@@ -31,15 +31,15 @@ class AuthenticatedSessionController extends Controller
         $role = $request->user()->role;
 
         $destination = match ($role) {
-            'admin'    => route('admin.dashboard'),
+            'admin' => route('admin.dashboard'),
             'engineer' => route('engineer.complaints.index'),
-            'citizen'  => route('citizen.complaints.index'),
-            default    => route('home'),
+            'citizen' => route('citizen.complaints.index'),
+            default => route('home'),
         };
 
         // Use intended() only when the stored URL is a safe web page (not an API endpoint).
         $intended = session()->pull('url.intended');
-        if ($intended && !str_contains($intended, '/api/')) {
+        if ($intended && ! str_contains($intended, '/api/')) {
             return redirect($intended);
         }
 

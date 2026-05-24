@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
@@ -11,8 +12,6 @@ class ComplaintOptionsController extends Controller
      * Used by admin/engineer filter UIs to populate dropdowns dynamically.
      *
      * GET /api/v1/complaint-options
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {

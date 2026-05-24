@@ -2,9 +2,12 @@
 
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsurePasswordIsSet;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\Middleware\StartSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,17 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // 1. EncryptCookies   → decrypts the laravel_session cookie
         // 2. StartSession     → loads the session from the decrypted cookie
         $middleware->api(prepend: [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
         ]);
         $middleware->alias([
             'password.setup' => EnsurePasswordIsSet::class,
-            'role'           => CheckRole::class,
+            'role' => CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
-
-

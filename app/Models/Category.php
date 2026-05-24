@@ -16,68 +16,68 @@ class Category extends Model
 
     const DEFAULTS = [
         [
-            'name'        => 'Pothole',
-            'slug'        => 'pothole',
-            'icon'        => '🕳️',
-            'color'       => 'red',
+            'name' => 'Pothole',
+            'slug' => 'pothole',
+            'icon' => '🕳️',
+            'color' => 'red',
             'description' => 'Holes or craters on the road surface caused by wear or damage.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Waterlogging',
-            'slug'        => 'waterlogging',
-            'icon'        => '🌊',
-            'color'       => 'blue',
+            'name' => 'Waterlogging',
+            'slug' => 'waterlogging',
+            'icon' => '🌊',
+            'color' => 'blue',
             'description' => 'Accumulation of water on roads due to poor drainage.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Broken Divider',
-            'slug'        => 'broken-divider',
-            'icon'        => '🚧',
-            'color'       => 'orange',
+            'name' => 'Broken Divider',
+            'slug' => 'broken-divider',
+            'icon' => '🚧',
+            'color' => 'orange',
             'description' => 'Damaged or missing road dividers or median barriers.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Cracked Road',
-            'slug'        => 'cracked-road',
-            'icon'        => '⚠️',
-            'color'       => 'yellow',
+            'name' => 'Cracked Road',
+            'slug' => 'cracked-road',
+            'icon' => '⚠️',
+            'color' => 'yellow',
             'description' => 'Visible cracks or fissures on road surface.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Drainage Issue',
-            'slug'        => 'drainage-issue',
-            'icon'        => '🚿',
-            'color'       => 'teal',
+            'name' => 'Drainage Issue',
+            'slug' => 'drainage-issue',
+            'icon' => '🚿',
+            'color' => 'teal',
             'description' => 'Blocked or broken drainage systems causing flooding.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Street Light',
-            'slug'        => 'street-light',
-            'icon'        => '💡',
-            'color'       => 'purple',
+            'name' => 'Street Light',
+            'slug' => 'street-light',
+            'icon' => '💡',
+            'color' => 'purple',
             'description' => 'Non-functional or damaged street lights.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Road Collapse',
-            'slug'        => 'road-collapse',
-            'icon'        => '🏚️',
-            'color'       => 'rose',
+            'name' => 'Road Collapse',
+            'slug' => 'road-collapse',
+            'icon' => '🏚️',
+            'color' => 'rose',
             'description' => 'Serious structural failure or sinkhole on road.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
         [
-            'name'        => 'Other',
-            'slug'        => 'other',
-            'icon'        => '📌',
-            'color'       => 'gray',
+            'name' => 'Other',
+            'slug' => 'other',
+            'icon' => '📌',
+            'color' => 'gray',
             'description' => 'Any other road-related issue not listed above.',
-            'is_active'   => true,
+            'is_active' => true,
         ],
     ];
 
@@ -102,7 +102,7 @@ class Category extends Model
     protected function casts(): array
     {
         return [
-            'is_active'  => 'boolean',
+            'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
@@ -112,7 +112,7 @@ class Category extends Model
     // -------------------------------------------------------------------------
 
     protected $attributes = [
-        'is_active'  => true,
+        'is_active' => true,
         'sort_order' => 0,
     ];
 
@@ -134,7 +134,7 @@ class Category extends Model
     public function pendingComplaints(): HasMany
     {
         return $this->hasMany(Complaint::class)
-                    ->where('status', Complaint::STATUS_PENDING);
+            ->where('status', Complaint::STATUS_PENDING);
     }
 
     /**
@@ -143,7 +143,7 @@ class Category extends Model
     public function resolvedComplaints(): HasMany
     {
         return $this->hasMany(Complaint::class)
-                    ->where('status', Complaint::STATUS_VERIFIED);
+            ->where('status', Complaint::STATUS_VERIFIED);
     }
 
     // -------------------------------------------------------------------------
@@ -163,12 +163,14 @@ class Category extends Model
      */
     public function getResolutionRateAttribute(): string
     {
-        $total    = $this->complaints()->count();
+        $total = $this->complaints()->count();
         $resolved = $this->resolvedComplaints()->count();
 
-        if ($total === 0) return '0%';
+        if ($total === 0) {
+            return '0%';
+        }
 
-        return round(($resolved / $total) * 100) . '%';
+        return round(($resolved / $total) * 100).'%';
     }
 
     // -------------------------------------------------------------------------

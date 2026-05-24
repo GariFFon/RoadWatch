@@ -8,27 +8,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Complaint;
-use App\Models\Feedback;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------
 
-    const ROLE_CITIZEN  = 'citizen';
-    const ROLE_ENGINEER = 'engineer';
-    const ROLE_ADMIN    = 'admin';
+    const ROLE_CITIZEN = 'citizen';
 
-    const GENDER_MALE       = 'male';
-    const GENDER_FEMALE     = 'female';
-    const GENDER_OTHER      = 'other';
+    const ROLE_ENGINEER = 'engineer';
+
+    const ROLE_ADMIN = 'admin';
+
+    const GENDER_MALE = 'male';
+
+    const GENDER_FEMALE = 'female';
+
+    const GENDER_OTHER = 'other';
+
     const GENDER_PREFER_NOT = 'prefer_not_to_say';
 
-    const AUTH_EMAIL  = 'email';
+    const AUTH_EMAIL = 'email';
+
     const AUTH_GOOGLE = 'google';
 
     // -------------------------------------------------------------------------
@@ -76,15 +80,15 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at'          => 'datetime',
-            'last_login_at'              => 'datetime',
-            'password'                   => 'hashed',
-            'is_active'                  => 'boolean',
-            'is_verified'                => 'boolean',
-            'password_set'               => 'boolean',
-            'latitude'                   => 'decimal:7',
-            'longitude'                  => 'decimal:7',
-            'notification_preferences'   => 'array',
+            'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'is_verified' => 'boolean',
+            'password_set' => 'boolean',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+            'notification_preferences' => 'array',
         ];
     }
 
@@ -93,11 +97,11 @@ class User extends Authenticatable implements MustVerifyEmail
     // -------------------------------------------------------------------------
 
     protected $attributes = [
-        'role'          => self::ROLE_CITIZEN,
-        'is_active'     => true,
-        'is_verified'   => false,
+        'role' => self::ROLE_CITIZEN,
+        'is_active' => true,
+        'is_verified' => false,
         'auth_provider' => self::AUTH_EMAIL,
-        'password_set'  => true,   // false for new Google OAuth users
+        'password_set' => true,   // false for new Google OAuth users
         'notification_preferences' => '{"email":true,"sms":false,"push":true}',
     ];
 
@@ -231,7 +235,8 @@ class User extends Authenticatable implements MustVerifyEmail
             if (str_starts_with($this->profile_photo, 'http')) {
                 return $this->profile_photo;
             }
-            return asset('storage/' . $this->profile_photo);
+
+            return asset('storage/'.$this->profile_photo);
         }
 
         // Use Google avatar for OAuth users
@@ -298,4 +303,3 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Feedback::class, 'user_id');
     }
 }
-

@@ -18,6 +18,7 @@ class Feedback extends Model
     // -------------------------------------------------------------------------
 
     const MIN_RATING = 1;
+
     const MAX_RATING = 5;
 
     const RATING_LABELS = [
@@ -55,7 +56,7 @@ class Feedback extends Model
     protected function casts(): array
     {
         return [
-            'rating'       => 'integer',
+            'rating' => 'integer',
             'is_anonymous' => 'boolean',
         ];
     }
@@ -77,7 +78,7 @@ class Feedback extends Model
         static::creating(function (Feedback $feedback) {
             // Feedback can only be submitted on VERIFIED (or legacy resolved) complaints
             $complaint = Complaint::find($feedback->complaint_id);
-            if (! $complaint || !in_array($complaint->status, ['verified', 'resolved'])) {
+            if (! $complaint || ! in_array($complaint->status, ['verified', 'resolved'])) {
                 throw new \LogicException(
                     'Feedback can only be submitted after a complaint is verified.'
                 );
@@ -131,8 +132,9 @@ class Feedback extends Model
     public function getStarsAttribute(): string
     {
         $filled = str_repeat('★', $this->rating);
-        $empty  = str_repeat('☆', self::MAX_RATING - $this->rating);
-        return $filled . $empty;
+        $empty = str_repeat('☆', self::MAX_RATING - $this->rating);
+
+        return $filled.$empty;
     }
 
     /**

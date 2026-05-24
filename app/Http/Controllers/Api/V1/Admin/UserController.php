@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers\Api\V1\Admin;
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -9,7 +11,7 @@ class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = User::select('id','name','email','role','phone','is_active','created_at')
+        $query = User::select('id', 'name', 'email', 'role', 'phone', 'is_active', 'created_at')
             ->latest();
 
         // Optional role filter — used by the assign-engineer dropdown
@@ -28,6 +30,7 @@ class UserController extends Controller
     {
         $data = $request->validate(['role' => ['required', 'in:citizen,engineer,admin']]);
         $user->update(['role' => $data['role']]);
+
         return response()->json(['message' => "User role updated to {$data['role']}."]);
     }
 }

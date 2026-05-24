@@ -47,7 +47,7 @@ class SetPasswordController extends Controller
 
         // Set the password and mark setup as complete
         $user->forceFill([
-            'password'     => $request->password,  // auto-hashed via cast
+            'password' => $request->password,  // auto-hashed via cast
             'password_set' => true,
         ])->save();
 
@@ -58,9 +58,9 @@ class SetPasswordController extends Controller
     private function dashboardFor($user): string
     {
         return match ($user->role) {
-            'admin'    => route('admin.dashboard'),
+            'admin' => route('admin.dashboard'),
             'engineer' => route('engineer.dashboard'),
-            default    => route('citizen.complaints.index'),
+            default => route('citizen.complaints.index'),
         };
     }
 }

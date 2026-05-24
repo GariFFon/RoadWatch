@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Citizen;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ComplaintResource;
-use App\Models\Category;
 use App\Models\Complaint;
 use App\Models\ComplaintMedia;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +23,7 @@ class ComplaintController extends Controller
     {
         $complaints = auth()->user()
             ->complaints()
-            ->with(['category', 'media' => fn($q) => $q->where('stage', 'before')->orderBy('sort_order')])
+            ->with(['category', 'media' => fn ($q) => $q->where('stage', 'before')->orderBy('sort_order')])
             ->latest()
             ->paginate($request->integer('per_page', 10));
 
@@ -38,18 +37,18 @@ class ComplaintController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'title'        => ['required', 'string', 'max:255'],
-            'description'  => ['required', 'string', 'min:20', 'max:2000'],
-            'category_id'  => ['required', 'exists:categories,id'],
-            'severity'     => ['required', 'in:' . implode(',', Complaint::SEVERITY_LEVELS)],
-            'latitude'     => ['required', 'numeric', 'between:-90,90'],
-            'longitude'    => ['required', 'numeric', 'between:-180,180'],
-            'location'     => ['required', 'string', 'max:500'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'min:20', 'max:2000'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'severity' => ['required', 'in:'.implode(',', Complaint::SEVERITY_LEVELS)],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'location' => ['required', 'string', 'max:500'],
             'is_anonymous' => ['boolean'],
-            'images'       => ['required', 'array', 'min:1', 'max:5'],
-            'images.*'     => ['file', 'mimes:jpg,jpeg,png,webp,heic', 'max:10240'],
-            'videos'       => ['nullable', 'array', 'max:2'],
-            'videos.*'     => ['file', 'mimes:mp4,mov,webm', 'max:51200'],
+            'images' => ['required', 'array', 'min:1', 'max:5'],
+            'images.*' => ['file', 'mimes:jpg,jpeg,png,webp,heic', 'max:10240'],
+            'videos' => ['nullable', 'array', 'max:2'],
+            'videos.*' => ['file', 'mimes:mp4,mov,webm', 'max:51200'],
         ]);
 
         $complaint = DB::transaction(function () use ($validated, $request) {
@@ -57,55 +56,55 @@ class ComplaintController extends Controller
             $disk = config('filesystems.default'); // 'public' locally, 's3' in production
 
             $complaint = Complaint::create([
-                'user_id'      => auth()->id(),
-                'category_id'  => $validated['category_id'],
-                'title'        => $validated['title'],
-                'description'  => $validated['description'],
-                'latitude'     => $validated['latitude'],
-                'longitude'    => $validated['longitude'],
-                'location'     => $validated['location'],
-                'severity'     => $validated['severity'],
+                'user_id' => auth()->id(),
+                'category_id' => $validated['category_id'],
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'location' => $validated['location'],
+                'severity' => $validated['severity'],
                 'is_anonymous' => $request->boolean('is_anonymous'),
-                'status'       => Complaint::STATUS_PENDING,
+                'status' => Complaint::STATUS_PENDING,
             ]);
 
             foreach ($request->file('images', []) as $index => $file) {
-                $ext  = $file->getClientOriginalExtension() ?: 'jpg';
-                $path = "complaints/{$complaint->id}/images/" . Str::random(20) . ".{$ext}";
+                $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                $path = "complaints/{$complaint->id}/images/".Str::random(20).".{$ext}";
                 // Upload without ACL — bucket has Object Ownership enforced (ACLs disabled).
                 // Public read access is controlled by a Bucket Policy on the AWS console.
                 Storage::disk($disk)->put($path, file_get_contents($file));
                 ComplaintMedia::create([
-                    'complaint_id'  => $complaint->id,
-                    'uploaded_by'   => auth()->id(),
-                    'file_type'     => 'image',
-                    'stage'         => 'before',
+                    'complaint_id' => $complaint->id,
+                    'uploaded_by' => auth()->id(),
+                    'file_type' => 'image',
+                    'stage' => 'before',
                     'original_name' => $file->getClientOriginalName(),
-                    'mime_type'     => $file->getMimeType(),
-                    'size_bytes'    => $file->getSize(),
-                    'cloud_disk'    => $disk,
-                    'cloud_path'    => $path,
-                    'cloud_url'     => $this->buildPublicUrl($disk, $path),
-                    'sort_order'    => $index,
+                    'mime_type' => $file->getMimeType(),
+                    'size_bytes' => $file->getSize(),
+                    'cloud_disk' => $disk,
+                    'cloud_path' => $path,
+                    'cloud_url' => $this->buildPublicUrl($disk, $path),
+                    'sort_order' => $index,
                 ]);
             }
 
             foreach ($request->file('videos', []) as $index => $file) {
-                $ext  = $file->getClientOriginalExtension() ?: 'mp4';
-                $path = "complaints/{$complaint->id}/videos/" . Str::random(20) . ".{$ext}";
+                $ext = $file->getClientOriginalExtension() ?: 'mp4';
+                $path = "complaints/{$complaint->id}/videos/".Str::random(20).".{$ext}";
                 Storage::disk($disk)->put($path, file_get_contents($file));
                 ComplaintMedia::create([
-                    'complaint_id'  => $complaint->id,
-                    'uploaded_by'   => auth()->id(),
-                    'file_type'     => 'video',
-                    'stage'         => 'before',
+                    'complaint_id' => $complaint->id,
+                    'uploaded_by' => auth()->id(),
+                    'file_type' => 'video',
+                    'stage' => 'before',
                     'original_name' => $file->getClientOriginalName(),
-                    'mime_type'     => $file->getMimeType(),
-                    'size_bytes'    => $file->getSize(),
-                    'cloud_disk'    => $disk,
-                    'cloud_path'    => $path,
-                    'cloud_url'     => $this->buildPublicUrl($disk, $path),
-                    'sort_order'    => $index,
+                    'mime_type' => $file->getMimeType(),
+                    'size_bytes' => $file->getSize(),
+                    'cloud_disk' => $disk,
+                    'cloud_path' => $path,
+                    'cloud_url' => $this->buildPublicUrl($disk, $path),
+                    'sort_order' => $index,
                 ]);
             }
 
@@ -113,7 +112,7 @@ class ComplaintController extends Controller
         });
 
         return response()->json([
-            'message'   => 'Complaint submitted successfully.',
+            'message' => 'Complaint submitted successfully.',
             'complaint' => new ComplaintResource($complaint->load('category')),
         ], 201);
     }
@@ -172,10 +171,11 @@ class ComplaintController extends Controller
         if ($disk === 's3') {
             $customUrl = config('filesystems.disks.s3.url');
             if ($customUrl) {
-                return rtrim($customUrl, '/') . '/' . $path;
+                return rtrim($customUrl, '/').'/'.$path;
             }
             $bucket = config('filesystems.disks.s3.bucket');
             $region = config('filesystems.disks.s3.region');
+
             return "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
         }
 

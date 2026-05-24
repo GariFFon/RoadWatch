@@ -38,9 +38,9 @@ class ConfirmablePasswordController extends Controller
 
         // Role-based redirect — no generic 'dashboard' route exists in this app
         $homeUrl = match ($request->user()->role) {
-            User::ROLE_ADMIN    => route('admin.dashboard', absolute: false),
+            User::ROLE_ADMIN => route('admin.dashboard', absolute: false),
             User::ROLE_ENGINEER => route('engineer.complaints.index', absolute: false),
-            default             => route('citizen.complaints.index', absolute: false),
+            default => route('citizen.complaints.index', absolute: false),
         };
 
         return redirect()->intended($homeUrl);
