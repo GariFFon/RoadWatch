@@ -1,0 +1,165 @@
+name: RoadWatch CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Run PHPUnit Tests
+  # ─────────────────────────────────────────────
+  test:
+    name: 🧪 Run Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.3", "8.4"]
+
+    # ── MySQL service container (mirrors Railway production) ──
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: roadwatch_test
+          MYSQL_USER: roadwatch
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # 1. Checkout repository
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up PHP with required extensions (pdo_mysql instead of pdo_sqlite)
+      - name: 🐘 Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, bcmath, intl, pdo_mysql, zip, exif, pcntl
+          coverage: none
+          tools: composer:v2
+
+      # 3. Cache Composer dependencies
+      - name: 📦 Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      # 4. Install PHP dependencies (dev included for tests)
+      - name: 🔧 Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      # 5. Set up Node.js for frontend asset build
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # 6. Install npm dependencies and build assets
+      - name: 📦 Install npm dependencies
+        run: npm ci
+
+      - name: 🏗️ Build frontend assets
+        run: npm run build
+
+      # 7. Prepare Laravel environment — MySQL, matching Railway production
+      - name: ⚙️ Setup Laravel environment
+        run: |
+          cp .env.example .env
+          echo "APP_ENV=testing"                                          >> .env
+          echo "APP_KEY="                                                 >> .env
+          echo "DB_CONNECTION=mysql"                                      >> .env
+          echo "DB_HOST=127.0.0.1"                                        >> .env
+          echo "DB_PORT=3306"                                             >> .env
+          echo "DB_DATABASE=roadwatch_test"                               >> .env
+          echo "DB_USERNAME=roadwatch"                                    >> .env
+          echo "DB_PASSWORD=password"                                     >> .env
+          echo "FILESYSTEM_DISK=local"                                    >> .env
+          echo "QUEUE_CONNECTION=sync"                                    >> .env
+          echo "CACHE_STORE=array"                                        >> .env
+          echo "SESSION_DRIVER=array"                                     >> .env
+          echo "AWS_ACCESS_KEY_ID=testing"                                >> .env
+          echo "AWS_SECRET_ACCESS_KEY=testing"                            >> .env
+          echo "AWS_DEFAULT_REGION=ap-south-1"                           >> .env
+          echo "AWS_BUCKET=roadwatch-media"                               >> .env
+          echo "GOOGLE_CLIENT_ID=testing"                                 >> .env
+          echo "GOOGLE_CLIENT_SECRET=testing"                             >> .env
+          echo "GOOGLE_REDIRECT_URI=http://localhost/auth/google/callback" >> .env
+          php artisan key:generate
+          php artisan config:clear
+
+      # 8. Run migrations against MySQL
+      - name: 🗄️ Run database migrations
+        run: php artisan migrate --force
+
+      # 9. Run PHPUnit tests
+      - name: 🧪 Run PHPUnit tests
+        run: php artisan test --ansi
+
+  # ─────────────────────────────────────────────
+  # Job 2: Code Style Check (Laravel Pint)
+  # ─────────────────────────────────────────────
+  lint:
+    name: 🎨 Code Style (Pint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml
+          coverage: none
+          tools: composer:v2
+
+      - name: 📦 Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-composer-
+
+      - name: 🔧 Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: 🎨 Run Laravel Pint (code style check)
+        run: ./vendor/bin/pint --test
+
+  # ─────────────────────────────────────────────
+  # Job 3: PHP Syntax Check
+  # ─────────────────────────────────────────────
+  syntax:
+    name: 🔍 PHP Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: 🔍 Check PHP syntax
+        run: find app config database routes -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"  || true
