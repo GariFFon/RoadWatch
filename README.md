@@ -7,8 +7,10 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Laravel-13.9-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel">
   <img src="https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP">
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind">
+  <img src="https://img.shields.io/badge/Railway-Deployed-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Railway">
+  <img src="https://github.com/GariFFon/RoadWatch/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 ---
@@ -21,10 +23,11 @@
 
 - 📸 **Photo & video evidence** at both report filing (before) and resolution (after)
 - 🔄 **Strict status transition engine** — engineers follow defined workflows, admins have full override power
-- 🛡️ **Role-aware navigation** — every user sees only what's relevant to their role
+- 🛡️ **Role-aware navigation** — every user sees only what's relevant to their role; post-login redirect is role-based
 - 🔍 **Admin slide-over detail panel** — review before/after media side-by-side before marking resolved
 - 🔑 **Google OAuth + email/password** dual authentication
 - 📡 **REST API v1** powering all frontend panels
+- 🚀 **CI/CD pipeline** — GitHub Actions runs tests, code style, and syntax checks on every push
 
 ---
 
@@ -112,10 +115,10 @@ pending  ──►  under_review  ──►  in_progress  ──►  resolved
 
 ### Prerequisites
 
-- PHP 8.4+
+- PHP **8.4+** (required — Symfony 8.x in `composer.lock` needs PHP ≥8.4)
 - Composer
 - Node.js & npm
-- SQLite (default) or MySQL/PostgreSQL
+- MySQL 8.0+ (production & recommended for local dev)
 
 ### Installation
 
@@ -134,8 +137,13 @@ npm install
 cp .env.example .env
 php artisan key:generate
 
-# 5. Configure database (SQLite by default — no setup needed)
-touch database/database.sqlite
+# 5. Configure database — update .env with your MySQL credentials
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=roadwatch
+# DB_USERNAME=root
+# DB_PASSWORD=your_password
 
 # 6. Run migrations and seed categories
 php artisan migrate --seed
@@ -216,10 +224,41 @@ Full REST API documentation is in [`docs/API_REFERENCE.md`](docs/API_REFERENCE.m
 
 ## 🔐 Authentication
 
-- **Email + Password** — standard Breeze authentication
+- **Email + Password** — standard Breeze authentication with `phone` field required on registration
 - **Google OAuth** — via Laravel Socialite; new Google users are prompted to set a password on first login
 - **Role guard** — `CheckRole` middleware enforces access to `/citizen`, `/engineer`, `/admin` routes
 - **Session-based API** — all API endpoints use `auth:web` session cookies (no tokens needed)
+- **Post-login redirect** — role-based: citizens → `/citizen/complaints`, engineers → `/engineer/complaints`, admins → `/admin/dashboard`
+- **Email verification** — required for email/password users; Google OAuth users are pre-verified
+
+---
+
+## 🚀 CI/CD Pipeline
+
+RoadWatch uses **GitHub Actions** for automated quality checks on every push to `main` or `develop`.
+
+### Pipeline Overview (`.github/workflows/ci.yml`)
+
+| Job | What it does |
+|-----|--------------|
+| 🧪 **Run Tests (PHP 8.4)** | Boots a MySQL 8.0 container, runs `php artisan migrate`, executes all 25 PHPUnit tests |
+| 🎨 **Code Style (Pint)** | Runs `./vendor/bin/pint --test` — fails if any file violates Laravel coding standards |
+| 🔍 **PHP Syntax Check** | Runs `php -l` across `app/`, `config/`, `database/`, `routes/` |
+
+### Running Checks Locally
+
+```bash
+# Run all tests
+php artisan test --ansi
+
+# Fix code style before committing
+./vendor/bin/pint
+
+# Check style without modifying (like CI)
+./vendor/bin/pint --test
+```
+
+> **Tip:** Always run `./vendor/bin/pint` before pushing to keep the style job green.
 
 ---
 
@@ -229,11 +268,13 @@ Full REST API documentation is in [`docs/API_REFERENCE.md`](docs/API_REFERENCE.m
 |-------|-----------|
 | Backend Framework | Laravel 13 (PHP 8.4) |
 | Authentication | Laravel Breeze + Laravel Socialite (Google) |
-| Database | SQLite (dev) / MySQL (prod) |
-| File Storage | Laravel Storage → `public/storage` |
+| Database | MySQL 8.0 (Railway production & local dev) |
+| File Storage | AWS S3 (production) · Laravel Storage `public/` (local) |
 | Frontend | Blade templates + Vanilla JS + Axios |
 | Styling | Tailwind CSS + custom inline styles |
 | API | RESTful JSON API (session-based auth) |
+| Deployment | Railway (via `railpack.json`) |
+| CI/CD | GitHub Actions (test · pint · syntax) |
 
 ---
 

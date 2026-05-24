@@ -2,7 +2,7 @@
 
 **Base URL:** `http://localhost:8000/api/v1` (dev) · `https://yourdomain.com/api/v1` (prod)
 **Auth:** Laravel session cookie (`auth:web`) — axios sends `X-XSRF-TOKEN` automatically
-**API Version:** v1 · **Last updated:** 2026-05-16
+**API Version:** v1 · **Last updated:** 2026-05-25
 
 ---
 
@@ -34,6 +34,16 @@
 | `citizen` | `auth:web` + `role:citizen` | `/api/v1/citizen/...` |
 | `engineer` | `auth:web` + `role:engineer` | `/api/v1/engineer/...` |
 | `admin` | `auth:web` + `role:admin` | `/api/v1/admin/...` |
+
+### Post-Login Redirect (web layer)
+
+All authentication flows (login, register, email verification, password confirmation) redirect the user to their role-specific panel — there is **no generic `/dashboard` route** in this app.
+
+| Role | Redirect destination |
+|------|---------------------|
+| `citizen` | `/citizen/complaints` |
+| `engineer` | `/engineer/complaints` |
+| `admin` | `/admin/dashboard` |
 
 ---
 
@@ -120,6 +130,7 @@ const data = await res.json();
 ```
 
 > **Note:** `profile_photo_url` is `null` if no photo set and no Google avatar exists — frontend should show initials fallback. `profile_banner_url` is `null` when not set — show gradient fallback.
+> **Note:** `phone` is always present — it is a required field on registration (`unique:users,phone`).
 
 **Axios**
 ```js
@@ -1025,4 +1036,53 @@ pending  ──►  under_review  ──►  in_progress  ──►  awaiting_ve
 
 ---
 
-*Last updated: 2026-05-16 · RoadWatch API v1*
+---
+
+## Web Auth Flows (non-API)
+
+These are **web-layer routes** (not `/api/v1`) used by the Blade frontend. Documented here for completeness.
+
+### Registration — `POST /register`
+
+> Registers a new citizen. All new public registrations default to `role: citizen`.
+
+**Request fields (form submission):**
+
+| Field | Type | Required | Rules |
+|-------|------|----------|-------|
+| `name` | string | ✅ | max 255 |
+| `email` | string | ✅ | unique, lowercase, valid email |
+| `phone` | string | ✅ | max 15 chars, **unique** across `users.phone` |
+| `gender` | string | ❌ | `male` / `female` / `other` / `prefer_not_to_say` |
+| `password` | string | ✅ | min 8 chars, **must include mixed case + numbers** |
+| `password_confirmation` | string | ✅ | must match `password` |
+
+**Redirect after success:** `/citizen/complaints` (role-based)
+
+---
+
+### Email Verification — `GET /verify-email/{id}/{hash}`
+
+> Marks user email as verified. After verification, redirects to the user's role-based home `?verified=1` query string.
+
+| Role | Redirect |
+|------|----------|
+| `citizen` | `/citizen/complaints?verified=1` |
+| `engineer` | `/engineer/complaints?verified=1` |
+| `admin` | `/admin/dashboard?verified=1` |
+
+---
+
+### Password Confirmation — `POST /confirm-password`
+
+> Re-confirms the user's password for sensitive operations. After success, redirects to the role-based home.
+
+| Role | Redirect |
+|------|----------|
+| `citizen` | `/citizen/complaints` |
+| `engineer` | `/engineer/complaints` |
+| `admin` | `/admin/dashboard` |
+
+---
+
+*Last updated: 2026-05-25 · RoadWatch API v1*
